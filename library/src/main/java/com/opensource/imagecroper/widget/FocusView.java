@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Paint.Style;
 import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.view.View;
@@ -48,15 +47,32 @@ public class FocusView extends View {
 		super.onDraw(canvas);
 		initData();
 		mPaint.setColor(mFocusColor);
-		mPaint.setStyle(Style.STROKE);
+		mPaint.setStyle(Paint.Style.STROKE);
 		mPaint.setStrokeWidth(mStrokWidth);
 		canvas.drawRect(mFocusLeft, mFocusTop, mFocusRight, mFocusBottom, mPaint);	//绘制焦点框
-		mPaint.setStyle(Style.FILL);
+		mPaint.setStyle(Paint.Style.FILL);
 		mPaint.setColor(mHideColor);
 		canvas.drawRect(getLeft(), getTop(), getRight(), mFocusTop, mPaint);	//绘制焦点框上边阴影
 		canvas.drawRect(getLeft(), mFocusTop, mFocusLeft, mFocusBottom + mStrokWidth / 2, mPaint);	//绘制焦点框左边阴影
 		canvas.drawRect(mFocusRight + mStrokWidth / 2, mFocusTop, getRight(), mFocusBottom + mStrokWidth / 2, mPaint);	//绘制焦点框右边边阴影
 		canvas.drawRect(getLeft(), mFocusBottom + mStrokWidth / 2, getRight(), getBottom(), mPaint);	//绘制焦点框下边阴影
+//		mPaint.setStyle(Paint.Style.FILL);
+//		mPaint.setColor(mHideColor);
+//        canvas.drawRect(getLeft(), getTop(), getRight(), getBottom(), mPaint);
+//		mPaint.setColor(mFocusColor);
+//		mPaint.setStyle(Paint.Style.STROKE);
+//		mPaint.setStrokeWidth(mStrokWidth);
+//		canvas.drawRect(mFocusLeft, mFocusTop, mFocusRight, mFocusBottom, mPaint);	//绘制焦点框
+//
+//        mPaint.setColor(Color.argb(0xFF, 0xFF, 0, 0));
+//		mPaint.setStyle(Paint.Style.FILL);
+////        canvas.drawRect(mFocusLeft + mStrokWidth / 2, mFocusTop + mStrokWidth / 2, mFocusRight - mStrokWidth / 2, mFocusBottom - mStrokWidth / 2, mPaint);
+//
+//        Path p = new Path();
+//        p.addCircle(mFocusMidPoint.x, mFocusMidPoint.y, mFocusWidth / 2, Path.Direction.CCW );
+//        canvas.drawPath(p, mPaint);
+
+
 	}
 	
 	private void initData() {

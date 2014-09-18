@@ -19,8 +19,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
-
+/**
+ * CropView,
+ *
+ * Create by yinglovezhuzhu@gmail.com on 2014-09-18
+ */
 public class CropView extends FrameLayout {
+
+    private static final String TAG = "CropView";
 
 	/** 拖动模式 */
 	private static final int MODE_DRAG = 1;
@@ -28,14 +34,11 @@ public class CropView extends FrameLayout {
 	private static final int MODE_ZOOM = 2;
 	/** 没有模式 */
 	private static final int MODE_NONE = 3;
-
-	private int mMode = MODE_NONE;
-
+    /** 显示图片的控件 **/
 	private ImageView mImageView = null;
-	
+	/** 选取框控件 **/
 	private FocusView mFocusView = null;
 
-	private Bitmap mBitmap = null;
 
     /** 图片的Matrix，用来移动，缩放图片 **/
 	private Matrix mImageMatrix = new Matrix();
@@ -44,16 +47,26 @@ public class CropView extends FrameLayout {
     /** 临时的Matrix，用来校正缩放中间点计算 **/
     private Matrix mTempMatrix = new Matrix();
 
+    /** Pointer的落点，这个用于MODE_DRAG **/
 	private PointF mStartPoint = new PointF();
+    /** 图像缩放的中心点，通常是两点的中间点，但是图片超出FocusView的范围时会进行矫正，矫正后的不一定是中间点 **/
 	private PointF mZoomPoint = new PointF();
-	private float mOldDist = 1f;
-	
-	private float [] mMatrixValues = new float[9];
-	
+    /** 两指移动过程中的上个状态的距离 **/
+	private float mOldDist = 0f;
+
+    /** 图片的Matrix的数据值 **/
+	private float [] mImageMatrixValues = new float[9];
+    /** 图片临时Matrix数据值 **/
+    private float [] mTempMatrixValues = new float[9];
+
+    /** 图片Bitmap对象 **/
+	private Bitmap mBitmap = null;
+    /** 图片的最小缩放比例，这个用来保证图片最小能够铺满FocusView的中间窗口 **/
 	private float mMiniScale = 1f;
-	
-	private String tag = CropView.class.getSimpleName();
-	
+
+    /** 当前模式 **/
+	private int mMode = MODE_NONE;
+
 //	Matrix的Value是一个3x3的矩阵，文档中的Matrix获取数据的方法是void getValues(float[] values)，对于Matrix内字段的顺序
 //	并没有很明确的说明，经过测试发现他的顺序是这样的
 //	MSCALE_X	MSKEW_X		MTRANS_X
@@ -88,7 +101,7 @@ public class CropView extends FrameLayout {
 				RelativeLayout.LayoutParams.MATCH_PARENT,
 				LayoutParams.MATCH_PARENT));
 		mFocusView = new FocusView(context);
-		LogUtil.w(tag, "Fuces width = " + mFocusView.getFocusWidth());
+		LogUtil.w(TAG, "Fuces width = " + mFocusView.getFocusWidth());
 		addView(mFocusView, new LayoutParams(
 				RelativeLayout.LayoutParams.MATCH_PARENT,
 				LayoutParams.MATCH_PARENT));
@@ -107,19 +120,15 @@ public class CropView extends FrameLayout {
                 actionMove(event);
                 break;
             case MotionEvent.ACTION_UP:
+                mMode = MODE_NONE;
+                mImageMatrix.getValues(mImageMatrixValues);
+                break;
             case MotionEvent.ACTION_POINTER_UP:
                 mMode = MODE_NONE;
-                mImageMatrix.getValues(mMatrixValues);
-                Log.i(tag, "Image MSCALE_X = " + mMatrixValues[0] + "; MSKEW_X = " + mMatrixValues[1] + "; MTRANS_X = " + mMatrixValues[2]
-                        + "; \nMSCALE_Y = " + mMatrixValues[4] + "; MSKEW_Y = " + mMatrixValues[3] + "; MTRANS_Y = " + mMatrixValues[5]
-                        + "; \nMPERSP_0 = " + mMatrixValues[6] + "; MPERSP_1 = " + mMatrixValues[7] + "; MPERSP_2 = " + mMatrixValues[8]);
-
-                float [] values = new float[9];
-                mTempMatrix.getValues(values);
-                Log.i(tag, " temp MSCALE_X = " + values[0] + "; MSKEW_X = " + values[1] + "; MTRANS_X = " + values[2]
-                        + "; \nMSCALE_Y = " + values[4] + "; MSKEW_Y = " + values[3] + "; MTRANS_Y = " + values[5]
-                        + "; \nMPERSP_0 = " + values[6] + "; MPERSP_1 = " + values[7] + "; MPERSP_2 = " + values[8]);
-
+                mImageMatrix.getValues(mImageMatrixValues);
+//                Log.i(TAG, "Image MSCALE_X = " + mImageMatrixValues[0] + "; MSKEW_X = " + mImageMatrixValues[1] + "; MTRANS_X = " + mImageMatrixValues[2]
+//                        + "; \nMSCALE_Y = " + mImageMatrixValues[4] + "; MSKEW_Y = " + mImageMatrixValues[3] + "; MTRANS_Y = " + mImageMatrixValues[5]
+//                        + "; \nMPERSP_0 = " + mImageMatrixValues[6] + "; MPERSP_1 = " + mImageMatrixValues[7] + "; MPERSP_2 = " + mImageMatrixValues[8]);
                 break;
         }
         mImageView.setImageMatrix(mImageMatrix);
@@ -135,12 +144,12 @@ public class CropView extends FrameLayout {
 	public Bitmap cutImageBitmap(String path) throws FileNotFoundException {
 		if(mBitmap != null) {
 //			焦点框内的图片为缩放的图片，起始坐标（相对屏幕）有可能小于零，
-//			可以通过0 + (mFocusView.getFocusLeft() - mMatrixValues[2])获得真实的坐标（图片是从0开始的），
+//			可以通过0 + (mFocusView.getFocusLeft() - mImageMatrixValues[2])获得真实的坐标（图片是从0开始的），
 //			但是这个还是缩放的，别忘了除以缩放比例
-			int left = (int)((mFocusView.getFocusLeft() - mMatrixValues[2]) / mMatrixValues[0]);
-			int top = (int)((mFocusView.getFocusTop() - mMatrixValues[5]) / mMatrixValues[4]);
-			int right = (int) ((mFocusView.getFocusRight() - mMatrixValues[2]) / mMatrixValues[0]);
-			int bottom = (int) ((mFocusView.getFocusBottom() - mMatrixValues[5]) / mMatrixValues[4]);
+			int left = (int)((mFocusView.getFocusLeft() - mImageMatrixValues[2]) / mImageMatrixValues[0]);
+			int top = (int)((mFocusView.getFocusTop() - mImageMatrixValues[5]) / mImageMatrixValues[4]);
+			int right = (int) ((mFocusView.getFocusRight() - mImageMatrixValues[2]) / mImageMatrixValues[0]);
+			int bottom = (int) ((mFocusView.getFocusBottom() - mImageMatrixValues[5]) / mImageMatrixValues[4]);
 			left = left < 0 ? 0 : left;
 			top = top < 0 ? 0 : top;
 			right = right > mBitmap.getWidth() ? mBitmap.getWidth() : right;
@@ -162,25 +171,29 @@ public class CropView extends FrameLayout {
 	 * @param bottom
 	 */
 	private void correctSize(int left, int top, int right, int bottom) {
-		mImageMatrix.getValues(mMatrixValues);
-		int bitmapLeft = (int) mMatrixValues[2];
-		int bitmapTop = (int) mMatrixValues[5];
-		int bitmapRight = (int) (mBitmap.getWidth() * mMatrixValues[0] - mMatrixValues[2]);
-		int bitmapBottom = (int) (mBitmap.getHeight() * mMatrixValues[4] - mMatrixValues[5]);
+		mImageMatrix.getValues(mImageMatrixValues);
+		int bitmapLeft = (int) mImageMatrixValues[2];
+		int bitmapTop = (int) mImageMatrixValues[5];
+		int bitmapRight = (int) (mBitmap.getWidth() * mImageMatrixValues[0] - mImageMatrixValues[2]);
+		int bitmapBottom = (int) (mBitmap.getHeight() * mImageMatrixValues[4] - mImageMatrixValues[5]);
 		if(bitmapLeft > mFocusView.getFocusLeft()) {
-			left += (bitmapLeft - mFocusView.getFocusLeft()) / mMatrixValues[0];
+			left += (bitmapLeft - mFocusView.getFocusLeft()) / mImageMatrixValues[0];
 		}
 		if(bitmapTop > mFocusView.getFocusTop()) {
-			top += (bitmapTop - mFocusView.getFocusTop()) / mMatrixValues[4];
+			top += (bitmapTop - mFocusView.getFocusTop()) / mImageMatrixValues[4];
 		}
 		if(bitmapRight < mFocusView.getFocusRight()) {
-			right -= (mFocusView.getFocusRight() - bitmapRight) / mMatrixValues[0];
+			right -= (mFocusView.getFocusRight() - bitmapRight) / mImageMatrixValues[0];
 		}
 		if(bitmapBottom < mFocusView.getFocusBottom()) {
-			bottom -= (mFocusView.getFocusBottom() - bitmapBottom) / mMatrixValues[4];
+			bottom -= (mFocusView.getFocusBottom() - bitmapBottom) / mImageMatrixValues[4];
 		}
 	}
-	
+
+    /**
+     * onTouch中的MotionEvent.ACTION_DOWN
+     * @param event
+     */
 	private void actionDown( MotionEvent event) {
 		mImageView.setScaleType(ScaleType.MATRIX);
 		mImageMatrix.set(mImageView.getImageMatrix());
@@ -191,7 +204,7 @@ public class CropView extends FrameLayout {
 	
 	private void actionPointerDown(MotionEvent event) {
 		mOldDist = spacing(event);
-		if (mOldDist > 10f) {
+		if (mOldDist > 0f) {
 			mSavedMatrix.set(mImageMatrix);
 			midPoint(mZoomPoint, event);
 //			mZoomPoint.set(mFocusView.getFocusMidPoint());
@@ -204,63 +217,70 @@ public class CropView extends FrameLayout {
 
 	
 	private void actionMove(MotionEvent event) {
-		if (mMode == MODE_DRAG) {
-			mImageMatrix.set(mSavedMatrix);
-			float transX = event.getX() - mStartPoint.x;
-			float transY = event.getY() - mStartPoint.y;
-			mImageMatrix.getValues(mMatrixValues);
-			float leftLimit = mFocusView.getFocusLeft() - mMatrixValues[2];
-			float topLimit = mFocusView.getFocusTop() - mMatrixValues[5];
-			float rightLimit = mFocusView.getFocusRight() - (mBitmap.getWidth() * mMatrixValues[0] + mMatrixValues[2]);
-			float bottomLimit = mFocusView.getFocusBottom() - (mBitmap.getHeight() * mMatrixValues[0] + mMatrixValues[5]);
-			if(transX > leftLimit) {
-				transX = leftLimit;
-			}
-			if(transY > topLimit) {
-				transY = topLimit;
-			}
-			if(transX < rightLimit) {
-				transX = rightLimit;
-			}
-			if(transY < bottomLimit) {
-				transY = bottomLimit;
-			}
-			mImageMatrix.postTranslate(transX, transY);
-		} else if (mMode == MODE_ZOOM) {
-			float newDist = spacing(event);
-			if (newDist > 10f) {
-				mImageMatrix.set(mSavedMatrix);
-				mImageMatrix.getValues(mMatrixValues);
-                mTempMatrix.setValues(mMatrixValues);
-				float scale = newDist / mOldDist;
-				if(mMatrixValues[0] * scale < mMiniScale) {
-					scale = mMiniScale / mMatrixValues[0];
-				}
-				mTempMatrix.postScale(scale, scale, mZoomPoint.x, mZoomPoint.y);
-                float [] values = new float[9];
-                mTempMatrix.getValues(values);
-                if(values[2] > mFocusView.getFocusLeft()) {
-                    Log.w(tag, "Out of left");
-                    mZoomPoint.x = (mFocusView.getFocusLeft() - mMatrixValues[2] * scale) / (1 - scale);
+        switch (mMode) {
+            case MODE_DRAG:
+                mImageMatrix.set(mSavedMatrix);
+                mImageMatrix.getValues(mImageMatrixValues);
+                float transX = event.getX() - mStartPoint.x;
+                float transY = event.getY() - mStartPoint.y;
+                float leftLimit = mFocusView.getFocusLeft() - mImageMatrixValues[2];
+                float topLimit = mFocusView.getFocusTop() - mImageMatrixValues[5];
+                float rightLimit = mFocusView.getFocusRight() - (mBitmap.getWidth() * mImageMatrixValues[0] + mImageMatrixValues[2]);
+                float bottomLimit = mFocusView.getFocusBottom() - (mBitmap.getHeight() * mImageMatrixValues[0] + mImageMatrixValues[5]);
+                if(transX > leftLimit) {
+                    transX = leftLimit;
                 }
-                if(values[5] > mFocusView.getFocusTop()) {
-                    Log.w(tag, "Out of top");
-                    mZoomPoint.y = (mFocusView.getFocusTop() - mMatrixValues[5] * scale) / (1 - scale);
+                if(transY > topLimit) {
+                    transY = topLimit;
                 }
-                if(values[2] + mBitmap.getWidth() * values[0] < mFocusView.getFocusRight()) {
-                    Log.w(tag, "Out of right");
-                    mZoomPoint.x = (mFocusView.getFocusRight() - (mMatrixValues[2] + mBitmap.getWidth() * mMatrixValues[0]) * scale) / (1 - scale);
+                if(transX < rightLimit) {
+                    transX = rightLimit;
                 }
+                if(transY < bottomLimit) {
+                    transY = bottomLimit;
+                }
+                mImageMatrix.postTranslate(transX, transY);
+                break;
+            case MODE_ZOOM:
+                mImageMatrix.set(mSavedMatrix);
+                mImageMatrix.getValues(mImageMatrixValues);
+                float newDist = spacing(event);
+                if (newDist > 0f) { //距离大于0才进行操作
+                    mTempMatrix.setValues(mImageMatrixValues);
+                    float scale = newDist / mOldDist;
+                    if(mImageMatrixValues[0] * scale < mMiniScale) {
+                        scale = mMiniScale / mImageMatrixValues[0];
+                    }
+                    mTempMatrix.postScale(scale, scale, mZoomPoint.x, mZoomPoint.y);
+                    mTempMatrix.getValues(mTempMatrixValues);
+                    if(mTempMatrixValues[2] > mFocusView.getFocusLeft()) {
+                        Log.w(TAG, "Out of left");
+                        mZoomPoint.x = (mFocusView.getFocusLeft() - mImageMatrixValues[2] * scale) / (1 - scale);
+                    }
+                    if(mTempMatrixValues[5] > mFocusView.getFocusTop()) {
+                        Log.w(TAG, "Out of top");
+                        mZoomPoint.y = (mFocusView.getFocusTop() - mImageMatrixValues[5] * scale) / (1 - scale);
+                    }
+                    if(mTempMatrixValues[2] + mBitmap.getWidth() * mTempMatrixValues[0] < mFocusView.getFocusRight()) {
+                        Log.w(TAG, "Out of right");
+                        mZoomPoint.x = (mFocusView.getFocusRight() - (mImageMatrixValues[2] + mBitmap.getWidth() * mImageMatrixValues[0]) * scale) / (1 - scale);
+                    }
 
-                if(values[5] + mBitmap.getHeight() * values[4] < mFocusView.getFocusBottom()) {
-                    Log.w(tag, "Out of bottom");
-                    mZoomPoint.y = (mFocusView.getFocusBottom() - (mMatrixValues[5] + mBitmap.getHeight() * mMatrixValues[4]) * scale) / (1 - scale);
+                    if(mTempMatrixValues[5] + mBitmap.getHeight() * mTempMatrixValues[4] < mFocusView.getFocusBottom()) {
+                        Log.w(TAG, "Out of bottom");
+                        mZoomPoint.y = (mFocusView.getFocusBottom() - (mImageMatrixValues[5] + mBitmap.getHeight() * mImageMatrixValues[4]) * scale) / (1 - scale);
+                    }
+
+                    mImageMatrix.postScale(scale, scale, mZoomPoint.x, mZoomPoint.y);
+
                 }
-
-				mImageMatrix.postScale(scale, scale, mZoomPoint.x, mZoomPoint.y);
-
-			}
-		}
+                break;
+            case MODE_NONE:
+                // Do nothing
+                break;
+            default:
+                break;
+        }
 	}
 
 	private float spacing(MotionEvent event) {
