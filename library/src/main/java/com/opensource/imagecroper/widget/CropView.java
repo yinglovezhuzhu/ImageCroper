@@ -127,26 +127,26 @@ public class CropView extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-//        switch (event.getAction() & MotionEvent.ACTION_MASK) {
-//            case MotionEvent.ACTION_DOWN:
-//                actionDown(event);
-//                break;
-//            case MotionEvent.ACTION_POINTER_DOWN:
-//                actionPointerDown(event);
-//                break;
-//            case MotionEvent.ACTION_MOVE:
-//                actionMove(event);
-//                break;
-//            case MotionEvent.ACTION_UP:
-//                mMode = MODE_NONE;
-//                mImageMatrix.getValues(mImageMatrixValues);
-//                break;
-//            case MotionEvent.ACTION_POINTER_UP:
-//                mMode = MODE_NONE;
-//                mImageMatrix.getValues(mImageMatrixValues);
-//                break;
-//        }
-//        mImageView.setImageMatrix(mImageMatrix);
+        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN:
+                actionDown(event);
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                actionPointerDown(event);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                actionMove(event);
+                break;
+            case MotionEvent.ACTION_UP:
+                mMode = MODE_NONE;
+                mImageMatrix.getValues(mImageMatrixValues);
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                mMode = MODE_NONE;
+                mImageMatrix.getValues(mImageMatrixValues);
+                break;
+        }
+        mImageView.setImageMatrix(mImageMatrix);
         return true;
     }
 

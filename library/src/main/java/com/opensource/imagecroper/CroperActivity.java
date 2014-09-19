@@ -28,12 +28,16 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 
-import com.opensource.imagecroper.util.Util;
+import com.opensource.imagecroper.util.CroperUtil;
 import com.opensource.imagecroper.widget.CropView;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class CroperActivity extends Activity {
 
@@ -71,7 +75,6 @@ public class CroperActivity extends Activity {
 
 	private CropView mCropView = null;
 	
-	private DisplayMetrics mMetrics = new DisplayMetrics();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -111,7 +114,7 @@ public class CroperActivity extends Activity {
             // Create a MediaItem representing the URI.
             mInputUri = intent.getData();
 
-            File imageFile = Util.parseUriToFile(this, mInputUri);
+            File imageFile = CroperUtil.parseUriToFile(this, mInputUri);
 
 
             if(null != imageFile) {
@@ -119,48 +122,97 @@ public class CroperActivity extends Activity {
                 Log.i(TAG, "Parse Uri to file, file path : " + imagePath);
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(imagePath, options);
+                DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+                options.inSampleSize = calculateInSampleSize(options,
+                        displayMetrics.widthPixels, displayMetrics.heightPixels);
                 options.inJustDecodeBounds = false;
-                options.inSampleSize = 4;
                 mBitmap = BitmapFactory.decodeFile(imagePath, options);
-
             }
         }
 
-//        if (mBitmap == null) {
-//            Log.e(TAG, "Cannot load bitmap, exiting.");
-//            finish();
-//            return;
-//        }
-//
-//        // Make UI fullscreen.
-//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        if (mBitmap == null) {
+            Log.e(TAG, "Cannot load bitmap, exiting.");
+            finish();
+            return;
+        }
 
-//        findViewById(R.id.discard).setOnClickListener(new View.OnClickListener() {
-//            public void onClick(View v) {
-//                setResult(RESULT_CANCELED);
-//                finish();
-//            }
-//        });
-//
-//        findViewById(R.id.save).setOnClickListener(new View.OnClickListener() {
-//            public void onClick(View v) {
-//                onSaveClicked();
-//            }
-//        });
-//
-//
-//        mImageView.setImageBitmapResetBase(mBitmap, true);
-//
-//        makeCropView();
+        // Make UI fullscreen.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        findViewById(R.id.btn_croper_cancel).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                setResult(RESULT_CANCELED);
+                finish();
+            }
+        });
+
+        findViewById(R.id.btn_croper_save).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                onSaveClicked();
+            }
+        });
+
+        initCropView();
 	}
+
+    /**
+     * Calculate an inSampleSize for use in a {@link android.graphics.BitmapFactory.Options} object when decoding
+     * bitmaps using the decode* methods from {@link android.graphics.BitmapFactory}. This implementation calculates
+     * the closest inSampleSize that will result in the final decoded bitmap having a width and
+     * height equal to or larger than the requested width and height. This implementation does not
+     * ensure a power of 2 is returned for inSampleSize which can be faster when decoding but
+     * results in a larger bitmap which isn't as useful for caching purposes.
+     *
+     * @param options   An options object with out* params already populated (run through a decode*
+     *                  method with inJustDecodeBounds==true
+     * @param reqWidth  The requested width of the resulting bitmap
+     * @param reqHeight The requested height of the resulting bitmap
+     * @return The value to be used for inSampleSize
+     */
+    public static int calculateInSampleSize(BitmapFactory.Options options,
+                                            int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int width = options.outWidth;
+        final int height = options.outHeight;
+
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+            if (width > height) {
+                inSampleSize = Math.round((float) width / (float) reqWidth);
+            } else {
+                inSampleSize = Math.round((float) height / (float) reqHeight);
+            }
+
+            // This offers some additional logic in case the image has a strange
+            // aspect ratio. For example, a panorama may have a much larger
+            // width than height. In these cases the total pixels might still
+            // end up being too large to fit comfortably in memory, so we should
+            // be more aggressive with sample down the image (=larger
+            // inSampleSize).
+
+            final float totalPixels = width * height;
+
+            // Anything more than 2x the requested pixels we'll sample down
+            // further.
+            final float totalReqPixelsCap = reqWidth * reqHeight;
+
+            while (totalPixels / (inSampleSize * inSampleSize) > totalReqPixelsCap) {
+                inSampleSize++;
+            }
+        }
+        return inSampleSize;
+    }
 
     /**
      * Save button clicked
      */
     private void onSaveClicked() {
-//        if (mSaving)
-//            return;
-//
+        if (mSaving) {
+            return;
+        }
+
 //        if (mImageView.getCropView() == null) {
 //            return;
 //        }
@@ -262,66 +314,68 @@ public class CroperActivity extends Activity {
      * @param croppedImage
      */
     private void saveOutput(Bitmap croppedImage) {
-//        if (mSaveUri != null) {
-//            OutputStream outputStream = null;
-//            try {
-//                outputStream = mContentResolver.openOutputStream(mSaveUri);
-//                if (outputStream != null) {
-//                    croppedImage.compress(mOutputFormat, 75, outputStream);
-//                }
-//                // TODO ExifInterface write
-//            } catch (IOException ex) {
-//                Log.e(TAG, "Cannot open file: " + mSaveUri, ex);
-//            } finally {
-//                Util.closeSilently(outputStream);
-//            }
-//            Bundle extras = new Bundle();
-//            setResult(RESULT_OK, new Intent(mSaveUri.toString()).putExtras(extras));
-//        } else {
-//            Bundle extras = new Bundle();
-//            extras.putString(CropConfig.EXTRA_RECT, mImageView.getCropRect().toString());
-//            File oldFile = Util.parseUriToFile(this, mInputUri);
-//            File directory = new File(oldFile.getParent());
-//            int x = 0;
-//            String fileName = oldFile.getName();
-//            fileName = fileName.substring(0, fileName.lastIndexOf("."));
-//
-//            // Try file-1.jpg, file-2.jpg, ... until we find a filename
-//            // which
-//            // does not exist yet.
-//            while (true) {
-//                x += 1;
-//                String candidate = directory.toString() + "/" + fileName + "-" + x + ".jpg";
-//                boolean exists = (new File(candidate)).exists();
-//                if (!exists) { // CR: inline the expression for exists
-//                    // here--it's clear enough.
-//                    break;
-//                }
-//            }
-//
-//            String title = fileName + "-" + x;
-//            String finalFileName = title + ".jpg";
-//            int[] degree = new int[1];
-//            Double latitude = null;
-//            Double longitude = null;
-//            Uri newUri = Util.addImage(mContentResolver, title,
-//                    System.currentTimeMillis() / 1000, System.currentTimeMillis(), latitude,
-//                    longitude, directory.toString(), finalFileName,
-//                    croppedImage, null, degree);
-//            if (newUri != null) {
-//                setResult(RESULT_OK, new Intent().setAction(newUri.toString()).putExtras(extras));
-//            } else {
-//                setResult(RESULT_OK, new Intent().setAction(null));
-//            }
-//        }
-//        croppedImage.recycle();
-//        finish();
+        if (mSaveUri != null) {
+            OutputStream outputStream = null;
+            try {
+                outputStream = mContentResolver.openOutputStream(mSaveUri);
+                if (outputStream != null) {
+                    croppedImage.compress(mOutputFormat, 80, outputStream);
+                }
+                // TODO ExifInterface write
+            } catch (IOException ex) {
+                Log.e(TAG, "Cannot open file: " + mSaveUri, ex);
+            } finally {
+                CroperUtil.closeSilently(outputStream);
+            }
+            Bundle extras = new Bundle();
+            setResult(RESULT_OK, new Intent(mSaveUri.toString()).putExtras(extras));
+        } else {
+            Bundle extras = new Bundle();
+//            extras.putString(CroperConfig.EXTRA_RECT, mImageView.getCropRect().toString());
+            File oldFile = CroperUtil.parseUriToFile(this, mInputUri);
+            File directory = new File(oldFile.getParent());
+            int x = 0;
+            String fileName = oldFile.getName();
+            fileName = fileName.substring(0, fileName.lastIndexOf("."));
+
+            // Try file-1.jpg, file-2.jpg, ... until we find a filename
+            // which
+            // does not exist yet.
+            while (true) {
+                x += 1;
+                String candidate = directory.toString() + "/" + fileName + "-" + x + ".jpg";
+                boolean exists = (new File(candidate)).exists();
+                if (!exists) { // CR: inline the expression for exists
+                    // here--it's clear enough.
+                    break;
+                }
+            }
+
+            String title = fileName + "-" + x;
+            String finalFileName = title + ".jpg";
+            int[] degree = new int[1];
+            Double latitude = null;
+            Double longitude = null;
+            Uri newUri = CroperUtil.addImage(mContentResolver, title,
+                    System.currentTimeMillis() / 1000, System.currentTimeMillis(), latitude,
+                    longitude, directory.toString(), finalFileName,
+                    croppedImage, null, degree);
+            if (newUri != null) {
+                setResult(RESULT_OK, new Intent().setAction(newUri.toString()).putExtras(extras));
+            } else {
+                setResult(RESULT_OK, new Intent().setAction(null));
+            }
+        }
+        croppedImage.recycle();
+        finish();
     }
 
     /**
      * Create a HightlightView to show how to crop the image.
      */
-    private void makeCropView() {
+    private void initCropView() {
+        mCropView = (CropView) findViewById(R.id.cv_croper_image);
+        mCropView.setImageBitmap(mBitmap);
 //        HighlightView hv = new HighlightView(mImageView);
 //
 //        int width = mBitmap.getWidth();
