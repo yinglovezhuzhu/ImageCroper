@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.graphics.Region;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -32,45 +33,39 @@ public class FocusView extends View {
 	
 	public FocusView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
+
+        initData();
 	}
 
 	public FocusView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+
+        initData();
 	}
 
 	public FocusView(Context context) {
 		super(context);
+
+        initData();
 	}
-	
+
+
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
-		initData();
+
+        canvas.save();
+        canvas.clipRect(getLeft(), getTop(), getRight(), getBottom());
+        canvas.clipRect(mFocusLeft, mFocusTop, mFocusRight, mFocusBottom, Region.Op.DIFFERENCE);
+
+        canvas.drawColor(Color.argb(0xAA, 0x0, 0x0, 0x0));
+        canvas.restore();
+
 		mPaint.setColor(mFocusColor);
 		mPaint.setStyle(Paint.Style.STROKE);
 		mPaint.setStrokeWidth(mStrokWidth);
 		canvas.drawRect(mFocusLeft, mFocusTop, mFocusRight, mFocusBottom, mPaint);	//绘制焦点框
-		mPaint.setStyle(Paint.Style.FILL);
-		mPaint.setColor(mHideColor);
-		canvas.drawRect(getLeft(), getTop(), getRight(), mFocusTop, mPaint);	//绘制焦点框上边阴影
-		canvas.drawRect(getLeft(), mFocusTop, mFocusLeft, mFocusBottom + mStrokWidth / 2, mPaint);	//绘制焦点框左边阴影
-		canvas.drawRect(mFocusRight + mStrokWidth / 2, mFocusTop, getRight(), mFocusBottom + mStrokWidth / 2, mPaint);	//绘制焦点框右边边阴影
-		canvas.drawRect(getLeft(), mFocusBottom + mStrokWidth / 2, getRight(), getBottom(), mPaint);	//绘制焦点框下边阴影
-//		mPaint.setStyle(Paint.Style.FILL);
-//		mPaint.setColor(mHideColor);
-//        canvas.drawRect(getLeft(), getTop(), getRight(), getBottom(), mPaint);
-//		mPaint.setColor(mFocusColor);
-//		mPaint.setStyle(Paint.Style.STROKE);
-//		mPaint.setStrokeWidth(mStrokWidth);
-//		canvas.drawRect(mFocusLeft, mFocusTop, mFocusRight, mFocusBottom, mPaint);	//绘制焦点框
-//
-//        mPaint.setColor(Color.argb(0xFF, 0xFF, 0, 0));
-//		mPaint.setStyle(Paint.Style.FILL);
-////        canvas.drawRect(mFocusLeft + mStrokWidth / 2, mFocusTop + mStrokWidth / 2, mFocusRight - mStrokWidth / 2, mFocusBottom - mStrokWidth / 2, mPaint);
-//
-//        Path p = new Path();
-//        p.addCircle(mFocusMidPoint.x, mFocusMidPoint.y, mFocusWidth / 2, Path.Direction.CCW );
-//        canvas.drawPath(p, mPaint);
+
 
 
 	}
