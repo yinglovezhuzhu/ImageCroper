@@ -4,20 +4,23 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.RectF;
 import android.graphics.Region;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.opensource.imagecroper.util.LogUtil;
-
 public class FocusView extends View {
+
 	private String tag = FocusView.class.getSimpleName();
 	
-	private int mFocusLeft = 0;
-	private int mFocusTop = 0;
-	private int mFocusRight = 0;
-	private int mFocusBottom = 0;
+//	private int mFocusLeft = 0;
+//	private int mFocusTop = 0;
+//	private int mFocusRight = 0;
+//	private int mFocusBottom = 0;
+
+    private RectF mFocusRect = new RectF();
 	
 	private int mHideColor = Color.argb(0xAF, 0x00, 0x00, 0x00);
 	
@@ -30,23 +33,20 @@ public class FocusView extends View {
 	private float mStrokWidth = 3.0f;
 	
 	private PointF mFocusMidPoint = new PointF();
+
+    private Style mStyle = Style.CIRCLE;
 	
 	public FocusView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
-
-        initData();
 	}
 
 	public FocusView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-
-        initData();
 	}
 
 	public FocusView(Context context) {
 		super(context);
 
-        initData();
 	}
 
 
@@ -54,65 +54,50 @@ public class FocusView extends View {
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 
-        canvas.save();
-        canvas.clipRect(getLeft(), getTop(), getRight(), getBottom());
-        canvas.clipRect(mFocusLeft, mFocusTop, mFocusRight, mFocusBottom, Region.Op.DIFFERENCE);
+        //计算出焦点框的中点的坐标和上、下、左、右边的x或y的值
+        mFocusMidPoint.set((getRight() - getLeft()) / 2, (getBottom() - getTop()) / 2);
+        mFocusRect.left = mFocusMidPoint.x - mFocusWidth / 2;
+        mFocusRect.top = mFocusMidPoint.y - mFocusWidth / 2;
+        mFocusRect.right = mFocusMidPoint.x + mFocusWidth / 2;
+        mFocusRect.bottom = mFocusMidPoint.y + mFocusWidth / 2;
 
-        canvas.drawColor(Color.argb(0xAA, 0x0, 0x0, 0x0));
-        canvas.restore();
+        mPaint.setColor(mFocusColor);
+        mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setStrokeWidth(mStrokWidth);
+        mPaint.setAntiAlias(true);
+        Path focusPath = new Path();
+        if(Style.RECTANGLE == mStyle) {
+            focusPath.addRect(mFocusRect, Path.Direction.CCW);
 
-		mPaint.setColor(mFocusColor);
-		mPaint.setStyle(Paint.Style.STROKE);
-		mPaint.setStrokeWidth(mStrokWidth);
-		canvas.drawRect(mFocusLeft, mFocusTop, mFocusRight, mFocusBottom, mPaint);	//绘制焦点框
+            canvas.save();
+            canvas.clipRect(getLeft(), getTop(), getRight(), getBottom());
+            canvas.clipPath(focusPath, Region.Op.DIFFERENCE);
+            canvas.drawColor(Color.argb(0xAA, 0x0, 0x0, 0x0));
+            canvas.restore();
 
+        } else if(Style.CIRCLE == mStyle) {
+            float radius = Math.min((mFocusRect.right - mFocusRect.left) / 2,
+                    (mFocusRect.bottom - mFocusRect.top) / 2);
+            focusPath.addCircle(mFocusMidPoint.x, mFocusMidPoint.y, radius, Path.Direction.CCW);
 
+            canvas.save();
+            canvas.clipRect(getLeft(), getTop(), getRight(), getBottom());
+            canvas.clipPath(focusPath, Region.Op.DIFFERENCE);
+            canvas.drawColor(Color.argb(0xAA, 0x0, 0x0, 0x0));
+            canvas.restore();
 
-	}
-	
-	private void initData() {
-		LogUtil.i(tag, "View content+++++(" + getLeft() + ", " + getTop() + ", " 
-				+ getRight() + ", " + getBottom() + ")");
-		mFocusMidPoint.set((getRight() - getLeft()) / 2, (getBottom() - getTop()) / 2);
-		mFocusLeft = (int) (mFocusMidPoint.x - mFocusWidth / 2);
-		mFocusTop = (int) (mFocusMidPoint.y - mFocusWidth / 2);
-		mFocusRight = (int) (mFocusMidPoint.x + mFocusWidth / 2);
-		mFocusBottom = (int) (mFocusMidPoint.y + mFocusWidth / 2);
-		LogUtil.i(tag, "Focus content=====(" + getFocusLeft() + ", " + getFocusTop() + ", "
-				+ getFocusRight() + ", " + getFocusBottom() + ")");
-	}
-
-	/**
-	 * 返回焦点框左边位置
-	 * @return
-	 */
-	public int getFocusLeft() {
-		return mFocusLeft;
-	}
-
-	/**
-	 * 返回焦点框上边位置
-	 * @return
-	 */
-	public int getFocusTop() {
-		return mFocusTop;
+        }
+        canvas.drawPath(focusPath, mPaint); //绘制焦点框
+        focusPath.reset();
 	}
 
-	/**
-	 * 返回焦点框右边位置
-	 * @return
-	 */
-	public int getFocusRight() {
-		return mFocusRight;
-	}
-
-	/**
-	 * 返回焦点框下边位置
-	 * @return
-	 */
-	public int getFocusBottom() {
-		return mFocusBottom;
-	}
+    /**
+     * 获取焦点框的位置信息
+     * @return
+     */
+    public RectF getFocusRect() {
+        return mFocusRect;
+    }
 
 	/**
 	 * 返回焦点框中间点坐标
@@ -143,7 +128,7 @@ public class FocusView extends View {
 	 * 返回阴影颜色
 	 * @return
 	 */
-	public int getHideColor() {
+	public int getDarkColor() {
 		return mHideColor;
 	}
 	
@@ -151,7 +136,7 @@ public class FocusView extends View {
 	 * 设置阴影颜色
 	 * @param color
 	 */
-	public void setHidColor(int color) {
+	public void setDarkColor(int color) {
 		this.mHideColor = color;
 		postInvalidate();
 	}
@@ -189,5 +174,54 @@ public class FocusView extends View {
 		this.mStrokWidth = width;
 		postInvalidate();
 	}
-	
+
+    /**
+     * Sets focus style <br/><br/>
+     * <p/>Sets the style of focus view, you can sets it as rectangle or circle.
+     *
+     * @see com.opensource.imagecroper.widget.FocusView.Style
+     *
+     * @param style
+     */
+    public void setFocusStyle(Style style) {
+        this.mStyle = style;
+        postInvalidate();
+    }
+
+    /**
+     * Gets the style of focus view.
+     * @return
+     */
+    public Style getFocusStyle() {
+        return mStyle;
+    }
+
+    /**
+     * The style enum of focus view
+     */
+    public static enum Style {
+        RECTANGLE(0), CIRCLE(1);
+
+        private int value = -1;
+
+        private Style(int value) {
+         this.value = value;
+        }
+
+        public int value() {
+            return this.value;
+        }
+
+        public Style valueOf(int value) {
+            switch (value) {
+                case 0:
+                    return RECTANGLE;
+                case 1:
+                    return CIRCLE;
+                default:
+                    return RECTANGLE;
+            }
+        }
+
+    }
 }

@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -12,8 +13,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.RelativeLayout;
-
-import com.opensource.imagecroper.util.LogUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -64,6 +63,8 @@ public class CropView extends FrameLayout {
     /** 图片的最小缩放比例，这个用来保证图片最小能够铺满FocusView的中间窗口 **/
 	private float mMiniScale = 1f;
 
+    private RectF mFocusRect = new RectF();
+
     /** 当前模式 **/
 	private int mMode = MODE_NONE;
 
@@ -101,7 +102,6 @@ public class CropView extends FrameLayout {
 				RelativeLayout.LayoutParams.MATCH_PARENT,
 				LayoutParams.MATCH_PARENT));
 		mFocusView = new FocusView(context);
-		LogUtil.w(TAG, "Fuces width = " + mFocusView.getFocusWidth());
 		addView(mFocusView, new LayoutParams(
 				RelativeLayout.LayoutParams.MATCH_PARENT,
 				LayoutParams.MATCH_PARENT));
@@ -146,10 +146,10 @@ public class CropView extends FrameLayout {
 //			焦点框内的图片为缩放的图片，起始坐标（相对屏幕）有可能小于零，
 //			可以通过0 + (mFocusView.getFocusLeft() - mImageMatrixValues[2])获得真实的坐标（图片是从0开始的），
 //			但是这个还是缩放的，别忘了除以缩放比例
-			int left = (int)((mFocusView.getFocusLeft() - mImageMatrixValues[2]) / mImageMatrixValues[0]);
-			int top = (int)((mFocusView.getFocusTop() - mImageMatrixValues[5]) / mImageMatrixValues[4]);
-			int right = (int) ((mFocusView.getFocusRight() - mImageMatrixValues[2]) / mImageMatrixValues[0]);
-			int bottom = (int) ((mFocusView.getFocusBottom() - mImageMatrixValues[5]) / mImageMatrixValues[4]);
+			int left = (int)((mFocusRect.left - mImageMatrixValues[2]) / mImageMatrixValues[0]);
+			int top = (int)((mFocusRect.top - mImageMatrixValues[5]) / mImageMatrixValues[4]);
+			int right = (int) ((mFocusRect.right - mImageMatrixValues[2]) / mImageMatrixValues[0]);
+			int bottom = (int) ((mFocusRect.bottom - mImageMatrixValues[5]) / mImageMatrixValues[4]);
 			left = left < 0 ? 0 : left;
 			top = top < 0 ? 0 : top;
 			right = right > mBitmap.getWidth() ? mBitmap.getWidth() : right;
@@ -176,17 +176,17 @@ public class CropView extends FrameLayout {
 		int bitmapTop = (int) mImageMatrixValues[5];
 		int bitmapRight = (int) (mBitmap.getWidth() * mImageMatrixValues[0] - mImageMatrixValues[2]);
 		int bitmapBottom = (int) (mBitmap.getHeight() * mImageMatrixValues[4] - mImageMatrixValues[5]);
-		if(bitmapLeft > mFocusView.getFocusLeft()) {
-			left += (bitmapLeft - mFocusView.getFocusLeft()) / mImageMatrixValues[0];
+		if(bitmapLeft > mFocusRect.left) {
+			left += (bitmapLeft - mFocusRect.left) / mImageMatrixValues[0];
 		}
-		if(bitmapTop > mFocusView.getFocusTop()) {
-			top += (bitmapTop - mFocusView.getFocusTop()) / mImageMatrixValues[4];
+		if(bitmapTop > mFocusRect.top) {
+			top += (bitmapTop - mFocusRect.top) / mImageMatrixValues[4];
 		}
-		if(bitmapRight < mFocusView.getFocusRight()) {
-			right -= (mFocusView.getFocusRight() - bitmapRight) / mImageMatrixValues[0];
+		if(bitmapRight < mFocusRect.right) {
+			right -= (mFocusRect.right - bitmapRight) / mImageMatrixValues[0];
 		}
-		if(bitmapBottom < mFocusView.getFocusBottom()) {
-			bottom -= (mFocusView.getFocusBottom() - bitmapBottom) / mImageMatrixValues[4];
+		if(bitmapBottom < mFocusRect.bottom) {
+			bottom -= (mFocusRect.bottom - bitmapBottom) / mImageMatrixValues[4];
 		}
 	}
 
@@ -199,6 +199,7 @@ public class CropView extends FrameLayout {
 		mImageMatrix.set(mImageView.getImageMatrix());
 		mSavedMatrix.set(mImageMatrix);
 		mStartPoint.set(event.getX(), event.getY());
+        mFocusRect.set(mFocusView.getFocusRect());
 		mMode = MODE_DRAG;
 	}
 	
@@ -223,10 +224,10 @@ public class CropView extends FrameLayout {
                 mImageMatrix.getValues(mImageMatrixValues);
                 float transX = event.getX() - mStartPoint.x;
                 float transY = event.getY() - mStartPoint.y;
-                float leftLimit = mFocusView.getFocusLeft() - mImageMatrixValues[2];
-                float topLimit = mFocusView.getFocusTop() - mImageMatrixValues[5];
-                float rightLimit = mFocusView.getFocusRight() - (mBitmap.getWidth() * mImageMatrixValues[0] + mImageMatrixValues[2]);
-                float bottomLimit = mFocusView.getFocusBottom() - (mBitmap.getHeight() * mImageMatrixValues[0] + mImageMatrixValues[5]);
+                float leftLimit = mFocusRect.left - mImageMatrixValues[2];
+                float topLimit = mFocusRect.top - mImageMatrixValues[5];
+                float rightLimit = mFocusRect.right - (mBitmap.getWidth() * mImageMatrixValues[0] + mImageMatrixValues[2]);
+                float bottomLimit = mFocusRect.bottom - (mBitmap.getHeight() * mImageMatrixValues[0] + mImageMatrixValues[5]);
                 if(transX > leftLimit) {
                     transX = leftLimit;
                 }
@@ -253,22 +254,22 @@ public class CropView extends FrameLayout {
                     }
                     mTempMatrix.postScale(scale, scale, mZoomPoint.x, mZoomPoint.y);
                     mTempMatrix.getValues(mTempMatrixValues);
-                    if(mTempMatrixValues[2] > mFocusView.getFocusLeft()) {
+                    if(mTempMatrixValues[2] > mFocusRect.left) {
                         Log.w(TAG, "Out of left");
-                        mZoomPoint.x = (mFocusView.getFocusLeft() - mImageMatrixValues[2] * scale) / (1 - scale);
+                        mZoomPoint.x = (mFocusRect.left - mImageMatrixValues[2] * scale) / (1 - scale);
                     }
-                    if(mTempMatrixValues[5] > mFocusView.getFocusTop()) {
+                    if(mTempMatrixValues[5] > mFocusRect.top) {
                         Log.w(TAG, "Out of top");
-                        mZoomPoint.y = (mFocusView.getFocusTop() - mImageMatrixValues[5] * scale) / (1 - scale);
+                        mZoomPoint.y = (mFocusRect.top - mImageMatrixValues[5] * scale) / (1 - scale);
                     }
-                    if(mTempMatrixValues[2] + mBitmap.getWidth() * mTempMatrixValues[0] < mFocusView.getFocusRight()) {
+                    if(mTempMatrixValues[2] + mBitmap.getWidth() * mTempMatrixValues[0] < mFocusRect.right) {
                         Log.w(TAG, "Out of right");
-                        mZoomPoint.x = (mFocusView.getFocusRight() - (mImageMatrixValues[2] + mBitmap.getWidth() * mImageMatrixValues[0]) * scale) / (1 - scale);
+                        mZoomPoint.x = (mFocusRect.right - (mImageMatrixValues[2] + mBitmap.getWidth() * mImageMatrixValues[0]) * scale) / (1 - scale);
                     }
 
-                    if(mTempMatrixValues[5] + mBitmap.getHeight() * mTempMatrixValues[4] < mFocusView.getFocusBottom()) {
+                    if(mTempMatrixValues[5] + mBitmap.getHeight() * mTempMatrixValues[4] < mFocusRect.bottom) {
                         Log.w(TAG, "Out of bottom");
-                        mZoomPoint.y = (mFocusView.getFocusBottom() - (mImageMatrixValues[5] + mBitmap.getHeight() * mImageMatrixValues[4]) * scale) / (1 - scale);
+                        mZoomPoint.y = (mFocusRect.bottom - (mImageMatrixValues[5] + mBitmap.getHeight() * mImageMatrixValues[4]) * scale) / (1 - scale);
                     }
 
                     mImageMatrix.postScale(scale, scale, mZoomPoint.x, mZoomPoint.y);
