@@ -18,10 +18,8 @@
   -->
 
 <resources>
-
-    <string name="app_name">ImageCroper</string>
-    <string name="action_settings">Settings</string>
-    
-    <string name="cut">Cut</string>
-
+    <color name="croper_title_background">#FF000000</color>
+    <color name="croper_title_text_color">#FFFFFFFF</color>
+    <color name="croper_content_background">#FFFFFFFF</color>
+    <color name="croper_transparent">#00000000</color>
 </resources>

@@ -16,16 +16,51 @@
   ~  limitations under the License.
   -->
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".CroperActivity"
-    android:background="@drawable/ic_launcher">
-
+    android:background="@color/croper_content_background">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:background="@color/croper_title_background">
+        <Button
+            android:id="@+id/btn_croper_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="@dimen/croper_title_button_minWidth"
+            android:minHeight="@dimen/croper_title_button_minHeight"
+            android:padding="@dimen/croper_title_padding"
+            android:background="@color/croper_transparent"
+            android:textSize="@dimen/croper_title_textSize"
+            android:textColor="@color/croper_title_text_color"
+            android:text="@string/cancel"/>
+        <TextView
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="@dimen/croper_title_padding"
+            android:textSize="@dimen/croper_title_textSize"
+            android:textColor="@color/croper_title_text_color"
+            android:gravity="center"
+            android:text="@string/title"/>
+        <Button
+            android:id="@+id/btn_croper_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="@dimen/croper_title_button_minWidth"
+            android:minHeight="@dimen/croper_title_button_minHeight"
+            android:padding="@dimen/croper_title_padding"
+            android:background="@color/croper_transparent"
+            android:textSize="@dimen/croper_title_textSize"
+            android:textColor="@color/croper_title_text_color"
+            android:text="@string/save"/>
+    </LinearLayout>
     <com.opensource.imagecroper.widget.CropView
         android:id="@+id/cv_photo"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
     
-</RelativeLayout>
+</LinearLayout>
