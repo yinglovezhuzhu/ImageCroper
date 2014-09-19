@@ -21,6 +21,7 @@
 
     <string name="app_name">ImageCroper</string>
 
-    <string name="crop_image">CropImage</string>
+    <string name="crop_image_from_gallery">Crop from gallery</string>
+    <string name="crop_image_from_camera">Crop from camera</string>
 
 </resources>

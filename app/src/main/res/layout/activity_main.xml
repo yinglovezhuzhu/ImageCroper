@@ -27,9 +27,25 @@
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/btn_crop"
+        android:id="@+id/btn_crop_from_gallery"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/crop_image"/>
+        android:text="@string/crop_image_from_gallery"/>
+
+    <Button
+        android:id="@+id/btn_crop_from_camera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btn_crop_from_gallery"
+        android:layout_marginTop="20dip"
+        android:text="@string/crop_image_from_camera"/>
+    <ImageView
+        android:id="@+id/iv_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/btn_crop_from_camera"
+        android:scaleType="centerInside"
+        android:adjustViewBounds="true"
+        android:layout_marginTop="20dip"/>
 
 </RelativeLayout>

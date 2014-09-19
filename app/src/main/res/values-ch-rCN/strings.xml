@@ -23,4 +23,7 @@
 
     <string name="crop_image">裁剪图片</string>
 
+    <string name="crop_image_from_gallery">图库选择裁剪</string>
+    <string name="crop_image_from_camera">拍照裁剪</string>
+
 </resources>
