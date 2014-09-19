@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2014. The Android Open Source Project.
+ *
+ *         yinglovezhuzhu@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package com.opensource.imagecroper.widget;
 
 import android.content.Context;
@@ -103,8 +121,8 @@ public class CropView extends FrameLayout {
 				LayoutParams.MATCH_PARENT));
 		mFocusView = new FocusView(context);
 		addView(mFocusView, new LayoutParams(
-				RelativeLayout.LayoutParams.MATCH_PARENT,
-				LayoutParams.MATCH_PARENT));
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                LayoutParams.MATCH_PARENT));
 	}
 
     @Override
@@ -126,14 +144,10 @@ public class CropView extends FrameLayout {
             case MotionEvent.ACTION_POINTER_UP:
                 mMode = MODE_NONE;
                 mImageMatrix.getValues(mImageMatrixValues);
-//                Log.i(TAG, "Image MSCALE_X = " + mImageMatrixValues[0] + "; MSKEW_X = " + mImageMatrixValues[1] + "; MTRANS_X = " + mImageMatrixValues[2]
-//                        + "; \nMSCALE_Y = " + mImageMatrixValues[4] + "; MSKEW_Y = " + mImageMatrixValues[3] + "; MTRANS_Y = " + mImageMatrixValues[5]
-//                        + "; \nMPERSP_0 = " + mImageMatrixValues[6] + "; MPERSP_1 = " + mImageMatrixValues[7] + "; MPERSP_2 = " + mImageMatrixValues[8]);
                 break;
         }
         mImageView.setImageMatrix(mImageMatrix);
         return true;
-//        return super.onTouchEvent(event);
     }
 
     /**
@@ -208,7 +222,6 @@ public class CropView extends FrameLayout {
 		if (mOldDist > 0f) {
 			mSavedMatrix.set(mImageMatrix);
 			midPoint(mZoomPoint, event);
-//			mZoomPoint.set(mFocusView.getFocusMidPoint());
 			mMiniScale = (float) mFocusView.getFocusWidth() / Math.min(mBitmap.getWidth(), mBitmap.getHeight());
 			mMode = MODE_ZOOM;
 		}
