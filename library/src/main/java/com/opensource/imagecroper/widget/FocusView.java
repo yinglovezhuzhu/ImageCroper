@@ -31,28 +31,36 @@ import android.view.View;
 
 public class FocusView extends View {
 
-    private String tag = FocusView.class.getSimpleName();
+    private static final String TAG = "FocusView";
 
-//	private int mFocusLeft = 0;
-//	private int mFocusTop = 0;
-//	private int mFocusRight = 0;
-//	private int mFocusBottom = 0;
+    private static final int DEFAULT_FOCUS_SIZE = 400;
 
-    private RectF mFocusRect = new RectF();
-
-    private int mHideColor = Color.argb(0xAF, 0x00, 0x00, 0x00);
-
-    private int mFocusColor = Color.argb(0xFF, 0x80, 0x80, 0x80);
-
+    /**  **/
     private Paint mPaint = new Paint();
 
-    private int mFocusWidth = 400;
+    /** 暗色 **/
+    private int mDarkColor = Color.argb(0xAF, 0x00, 0x00, 0x00);
 
-    private float mStrokWidth = 3.0f;
+    /** 焦点框的边框颜色 **/
+    private int mFocusColor = Color.argb(0xFF, 0x80, 0x80, 0x80);
 
+    /** 焦点框边框的宽度（画笔宽度） **/
+    private float mBorderWidth = 3.0f;
+
+    /** 焦点框的宽度 **/
+    private int mFocusWidth = DEFAULT_FOCUS_SIZE;
+
+    /** 焦点框的高度 **/
+    private int mFocusHeight = DEFAULT_FOCUS_SIZE;
+
+    /**  **/
+    private RectF mFocusRect = new RectF();
+
+    /**  **/
     private PointF mFocusMidPoint = new PointF();
 
-    private Style mStyle = Style.CIRCLE;
+    /**  **/
+    private Style mStyle = Style.RECTANGLE;
 
     public FocusView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -75,14 +83,10 @@ public class FocusView extends View {
         //计算出焦点框的中点的坐标和上、下、左、右边的x或y的值
         mFocusMidPoint.set((getRight() - getLeft()) / 2, (getBottom() - getTop()) / 2);
         mFocusRect.left = mFocusMidPoint.x - mFocusWidth / 2;
-        mFocusRect.top = mFocusMidPoint.y - mFocusWidth / 2;
         mFocusRect.right = mFocusMidPoint.x + mFocusWidth / 2;
-        mFocusRect.bottom = mFocusMidPoint.y + mFocusWidth / 2;
+        mFocusRect.top = mFocusMidPoint.y - mFocusHeight / 2;
+        mFocusRect.bottom = mFocusMidPoint.y + mFocusHeight / 2;
 
-        mPaint.setColor(mFocusColor);
-        mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(mStrokWidth);
-        mPaint.setAntiAlias(true);
         Path focusPath = new Path();
         if (Style.RECTANGLE == mStyle) {
             focusPath.addRect(mFocusRect, Path.Direction.CCW);
@@ -105,6 +109,10 @@ public class FocusView extends View {
             canvas.restore();
 
         }
+        mPaint.setColor(mFocusColor);
+        mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setStrokeWidth(mBorderWidth);
+        mPaint.setAntiAlias(true);
         canvas.drawPath(focusPath, mPaint); //绘制焦点框
         focusPath.reset();
     }
@@ -147,12 +155,28 @@ public class FocusView extends View {
     }
 
     /**
+     * 设置焦点框的高度
+     * @return
+     */
+    public int getFocusHeight() {
+        return mFocusHeight;
+    }
+
+    /**
+     * 获取焦点框的高度
+     * @param height
+     */
+    public void setFocusHeight(int height) {
+        this.mFocusHeight = height;
+    }
+
+    /**
      * 返回阴影颜色
      *
      * @return
      */
     public int getDarkColor() {
-        return mHideColor;
+        return mDarkColor;
     }
 
     /**
@@ -161,7 +185,7 @@ public class FocusView extends View {
      * @param color
      */
     public void setDarkColor(int color) {
-        this.mHideColor = color;
+        this.mDarkColor = color;
         postInvalidate();
     }
 
@@ -190,7 +214,7 @@ public class FocusView extends View {
      * @return
      */
     public float getStrokWidth() {
-        return mStrokWidth;
+        return mBorderWidth;
     }
 
     /**
@@ -199,7 +223,7 @@ public class FocusView extends View {
      * @param width
      */
     public void setStrokWidth(float width) {
-        this.mStrokWidth = width;
+        this.mBorderWidth = width;
         postInvalidate();
     }
 
