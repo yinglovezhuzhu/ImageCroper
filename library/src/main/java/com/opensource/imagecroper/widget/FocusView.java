@@ -29,8 +29,6 @@ import android.graphics.Region;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.opensource.imagecroper.util.LogUtil;
-
 public class FocusView extends View {
 
     private static final String TAG = "FocusView";
@@ -114,7 +112,6 @@ public class FocusView extends View {
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        LogUtil.w(TAG, changed + "<>" + left + "<>" + top + "<>" + right + "<>" + bottom);
         if(changed) {
             //计算出焦点框的中点的坐标和上、下、左、右边的x或y的值
             mFocusMidPoint.set((getRight() - getLeft()) / 2, (getBottom() - getTop()) / 2);
