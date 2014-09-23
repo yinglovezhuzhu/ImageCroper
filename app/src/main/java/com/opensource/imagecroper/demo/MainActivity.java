@@ -29,6 +29,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.opensource.imagecroper.CroperActivity;
+import com.opensource.imagecroper.CroperConfig;
 import com.opensource.imagecroper.demo.util.Util;
 import com.opensource.imagecroper.util.LogUtil;
 
@@ -147,8 +148,8 @@ public class MainActivity extends ActionBarActivity {
 //        Intent intent = new Intent("com.android.camera.action.CROP");
         Intent intent = new Intent(this, CroperActivity.class);
         intent.setDataAndType(uri, "image/*");
-        // crop为true是设置在开启的intent中设置显示的view可以剪裁
-        intent.putExtra("crop", "true");
+        intent.putExtra(CroperConfig.EXTRA_CIRCLE_CROP, true);
+        intent.putExtra(CroperConfig.EXTRA_SCALE_UP_IF_NEEDED, true);
 
         // aspectX aspectY 是宽高的比例
         intent.putExtra("aspectX", 1);

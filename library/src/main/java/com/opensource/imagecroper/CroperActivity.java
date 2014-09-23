@@ -18,11 +18,16 @@
 
 package com.opensource.imagecroper;
 
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.Rect;
+import android.graphics.Region;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -39,7 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class CroperActivity extends Activity {
+public class CroperActivity extends MonitoredActivity {
 
 	private static final String TAG = "CroperActivity";
 
@@ -88,8 +93,8 @@ public class CroperActivity extends Activity {
         Bundle extras = intent.getExtras();
 
         if (extras != null) {
-            if (extras.getString(CroperConfig.EXTRA_CIRCLE_CROP) != null) {
-                mCircleCrop = true;
+            mCircleCrop = extras.getBoolean(CroperConfig.EXTRA_CIRCLE_CROP, false);
+            if (mCircleCrop) {
                 mAspectX = 1;
                 mAspectY = 1;
                 //TODO Add some code to make fomat is png when crop a circle image.
@@ -213,99 +218,100 @@ public class CroperActivity extends Activity {
             return;
         }
 
-//        if (mImageView.getCropView() == null) {
-//            return;
-//        }
-//
-//        mSaving = true;
-//        mImageView.setSaving(true);
-//
-//        Rect r = mImageView.getCropRect();
-//
-//        int width = r.width(); // CR: final == happy panda!
-//        int height = r.height();
-//
-//        // If we are circle cropping, we want alpha channel, which is the
-//        // third param here.
-//        Bitmap croppedImage = Bitmap.createBitmap(width, height, mCircleCrop ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
-//        {
-//            Canvas canvas = new Canvas(croppedImage);
-//            Rect dstRect = new Rect(0, 0, width, height);
-//            canvas.drawBitmap(mBitmap, r, dstRect, null);
-//        }
-//
-//        if (mCircleCrop) {
-//            // OK, so what's all this about?
-//            // Bitmaps are inherently rectangular but we want to return
-//            // something that's basically a circle. So we fill in the
-//            // area around the circle with alpha. Note the all important
-//            // PortDuff.Mode.CLEARes.
-//            Canvas c = new Canvas(croppedImage);
-//            Path p = new Path();
-//            p.addCircle(width / 2F, height / 2F, width / 2F, Path.Direction.CW);
-//            c.clipPath(p, Region.Op.DIFFERENCE);
-//            c.drawColor(0x00000000, PorterDuff.Mode.CLEAR);
-//        }
-//
-//        // If the output is required to a specific size then scale or fill.
-//        if (mOutputX != 0 && mOutputY != 0) {
-//            if (mScale) {
-//                // Scale the image to the required dimensions.
-//                Bitmap old = croppedImage;
-//                croppedImage = Util.transform(new Matrix(), croppedImage, mOutputX, mOutputY, mScaleUp);
-//                if (old != croppedImage) {
-//                    old.recycle();
-//                }
-//            } else {
-//
-//                /*
-//                 * Don't scale the image crop it to the size requested. Create
-//                 * an new image with the cropped image in the center and the
-//                 * extra space filled.
-//                 */
-//
-//                // Don't scale the image but instead fill it so it's the
-//                // required dimension
-//                Bitmap b = Bitmap.createBitmap(mOutputX, mOutputY, Bitmap.Config.RGB_565);
-//                Canvas canvas = new Canvas(b);
-//
-//                Rect srcRect = mImageView.getCropRect();
-//                Rect dstRect = new Rect(0, 0, mOutputX, mOutputY);
-//
-//                int dx = (srcRect.width() - dstRect.width()) / 2;
-//                int dy = (srcRect.height() - dstRect.height()) / 2;
-//
-//                // If the srcRect is too big, use the center part of it.
-//                srcRect.inset(Math.max(0, dx), Math.max(0, dy));
-//
-//                // If the dstRect is too big, use the center part of it.
-//                dstRect.inset(Math.max(0, -dx), Math.max(0, -dy));
-//
-//                // Draw the cropped bitmap in the center.
-//                canvas.drawBitmap(mBitmap, srcRect, dstRect, null);
-//
-//                // Set the cropped bitmap as the new bitmap.
-//                croppedImage.recycle();
-//                croppedImage = b;
-//            }
-//        }
-//
-//        // Return the cropped image directly or save it to the specified URI.
-//        Bundle myExtras = getIntent().getExtras();
-//        if (myExtras != null && (myExtras.getParcelable(CropConfig.EXTRA_DATA) != null || myExtras.getBoolean(CropConfig.EXTRA_RETURN_DATA))) {
-//            Bundle extras = new Bundle();
-//            extras.putParcelable(CropConfig.EXTRA_DATA, croppedImage);
-//            setResult(RESULT_OK, (new Intent()).setAction(CropConfig.ACTION_INLINE_DATA).putExtras(extras));
-//            finish();
-//        } else {
-//            final Bitmap b = croppedImage;
-//            final Runnable save = new Runnable() {
-//                public void run() {
-//                    saveOutput(b);
-//                }
-//            };
-//            Util.startBackgroundJob(this, null, getResources().getString(R.string.saving_image), save, mHandler);
-//        }
+        if (null == mCropView) {
+            return;
+        }
+
+        mSaving = true;
+        mCropView.setSaving(true);
+
+        Rect rect = mCropView.getCropRect();
+
+        int width = rect.width(); // CR: final == happy panda!
+        int height = rect.height();
+
+        // If we are circle cropping, we want alpha channel, which is the
+        // third param here.
+        Bitmap croppedImage = Bitmap.createBitmap(width, height, mCircleCrop ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
+        {
+            Canvas canvas = new Canvas(croppedImage);
+            Rect dstRect = new Rect(0, 0, width, height);
+            canvas.drawBitmap(mBitmap, rect, dstRect, null);
+        }
+
+        if (mCircleCrop) {
+            // OK, so what's all this about?
+            // Bitmaps are inherently rectangular but we want to return
+            // something that's basically a circle. So we fill in the
+            // area around the circle with alpha. Note the all important
+            // PortDuff.Mode.CLEARes.
+            Canvas c = new Canvas(croppedImage);
+            Path p = new Path();
+            p.addCircle(width / 2F, height / 2F, width / 2F, Path.Direction.CW);
+            c.clipPath(p, Region.Op.DIFFERENCE);
+            c.drawColor(0x00000000, PorterDuff.Mode.CLEAR);
+        }
+
+        // If the output is required to a specific size then scale or fill.
+        if (mOutputX != 0 && mOutputY != 0) {
+            if (mScale) {
+                // Scale the image to the required dimensions.
+                Bitmap old = croppedImage;
+                croppedImage = CroperUtil.transform(new Matrix(), croppedImage, mOutputX, mOutputY, mScaleUp);
+                if (old != croppedImage) {
+                    old.recycle();
+                }
+            } else {
+
+                /*
+                 * Don't scale the image crop it to the size requested. Create
+                 * an new image with the cropped image in the center and the
+                 * extra space filled.
+                 */
+
+                // Don't scale the image but instead fill it so it's the
+                // required dimension
+                Bitmap b = Bitmap.createBitmap(mOutputX, mOutputY, Bitmap.Config.RGB_565);
+                Canvas canvas = new Canvas(b);
+
+                Rect srcRect = mCropView.getCropRect();
+                Rect dstRect = new Rect(0, 0, mOutputX, mOutputY);
+
+                int dx = (srcRect.width() - dstRect.width()) / 2;
+                int dy = (srcRect.height() - dstRect.height()) / 2;
+
+                // If the srcRect is too big, use the center part of it.
+                srcRect.inset(Math.max(0, dx), Math.max(0, dy));
+
+                // If the dstRect is too big, use the center part of it.
+                dstRect.inset(Math.max(0, -dx), Math.max(0, -dy));
+
+                // Draw the cropped bitmap in the center.
+                canvas.drawBitmap(mBitmap, srcRect, dstRect, null);
+
+                // Set the cropped bitmap as the new bitmap.
+                croppedImage.recycle();
+                croppedImage = b;
+            }
+        }
+
+        // Return the cropped image directly or save it to the specified URI.
+        Bundle myExtras = getIntent().getExtras();
+        if (myExtras != null && (myExtras.getParcelable(CroperConfig.EXTRA_DATA) != null || myExtras.getBoolean(CroperConfig.EXTRA_RETURN_DATA))) {
+            Bundle extras = new Bundle();
+            extras.putParcelable(CroperConfig.EXTRA_DATA, croppedImage);
+            setResult(RESULT_OK, (new Intent()).setAction(CroperConfig.ACTION_INLINE_DATA).putExtras(extras));
+            finish();
+        } else {
+            final Bitmap b = croppedImage;
+            final Runnable save = new Runnable() {
+                public void run() {
+                    saveOutput(b);
+                }
+            };
+//            CroperUtil.startBackgroundJob(this, null, getResources().getString(R.string.saving_image), save, mHandler);
+            CroperUtil.startBackgroundJob(this, null, "正在保存图片", save, mHandler);
+        }
     }
 
     /**
@@ -331,7 +337,7 @@ public class CroperActivity extends Activity {
             setResult(RESULT_OK, new Intent(mSaveUri.toString()).putExtras(extras));
         } else {
             Bundle extras = new Bundle();
-//            extras.putString(CroperConfig.EXTRA_RECT, mImageView.getCropRect().toString());
+            extras.putString(CroperConfig.EXTRA_RECT, mCropView.getCropRect().toString());
             File oldFile = CroperUtil.parseUriToFile(this, mInputUri);
             File directory = new File(oldFile.getParent());
             int x = 0;
@@ -371,38 +377,13 @@ public class CroperActivity extends Activity {
     }
 
     /**
-     * Create a HightlightView to show how to crop the image.
+     * Create a mCropView to show how to crop the image.
      */
     private void initCropView() {
         mCropView = (CropView) findViewById(R.id.cv_croper_image);
+        mCropView.setCircleCrop(mCircleCrop);
+//        mCropView.setCircleCrop(true);
         mCropView.setImageBitmap(mBitmap);
-//        HighlightView hv = new HighlightView(mImageView);
-//
-//        int width = mBitmap.getWidth();
-//        int height = mBitmap.getHeight();
-//
-//        Rect imageRect = new Rect(0, 0, width, height);
-//
-//        // CR: sentences!
-//        // make the default size about 4/5 of the width or height
-//        int cropWidth = Math.min(width, height) * 4 / 5;
-//        int cropHeight = cropWidth;
-//
-//        if (mAspectX != 0 && mAspectY != 0) {
-//            if (mAspectX > mAspectY) {
-//                cropHeight = cropWidth * mAspectY / mAspectX;
-//            } else {
-//                cropWidth = cropHeight * mAspectX / mAspectY;
-//            }
-//        }
-//
-//        int x = (width - cropWidth) / 2;
-//        int y = (height - cropHeight) / 2;
-//
-//        RectF cropRect = new RectF(x, y, x + cropWidth, y + cropHeight);
-//        hv.setup(mImageView.getImageMatrix(), imageRect, cropRect, mCircleCrop, mAspectX != 0 && mAspectY != 0);
-//        hv.setFocus(true);
-//        mImageView.setCropView(hv);
     }
 
 }

@@ -29,6 +29,8 @@ import android.graphics.Region;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.opensource.imagecroper.util.LogUtil;
+
 public class FocusView extends View {
 
     private static final String TAG = "FocusView";
@@ -60,7 +62,7 @@ public class FocusView extends View {
     private PointF mFocusMidPoint = new PointF();
 
     /**  **/
-    private Style mStyle = Style.RECTANGLE;
+    private Style mStyle = Style.CIRCLE;
 
     public FocusView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -75,17 +77,9 @@ public class FocusView extends View {
 
     }
 
-
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
-        //计算出焦点框的中点的坐标和上、下、左、右边的x或y的值
-        mFocusMidPoint.set((getRight() - getLeft()) / 2, (getBottom() - getTop()) / 2);
-        mFocusRect.left = mFocusMidPoint.x - mFocusWidth / 2;
-        mFocusRect.right = mFocusMidPoint.x + mFocusWidth / 2;
-        mFocusRect.top = mFocusMidPoint.y - mFocusHeight / 2;
-        mFocusRect.bottom = mFocusMidPoint.y + mFocusHeight / 2;
 
         Path focusPath = new Path();
         if (Style.RECTANGLE == mStyle) {
@@ -115,6 +109,20 @@ public class FocusView extends View {
         mPaint.setAntiAlias(true);
         canvas.drawPath(focusPath, mPaint); //绘制焦点框
         focusPath.reset();
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        LogUtil.w(TAG, changed + "<>" + left + "<>" + top + "<>" + right + "<>" + bottom);
+        if(changed) {
+            //计算出焦点框的中点的坐标和上、下、左、右边的x或y的值
+            mFocusMidPoint.set((getRight() - getLeft()) / 2, (getBottom() - getTop()) / 2);
+            mFocusRect.left = mFocusMidPoint.x - mFocusWidth / 2;
+            mFocusRect.right = mFocusMidPoint.x + mFocusWidth / 2;
+            mFocusRect.top = mFocusMidPoint.y - mFocusHeight / 2;
+            mFocusRect.bottom = mFocusMidPoint.y + mFocusHeight / 2;
+        }
     }
 
     /**
@@ -151,7 +159,7 @@ public class FocusView extends View {
      */
     public void setFocusWidth(int width) {
         this.mFocusWidth = width;
-        postInvalidate();
+        invalidate();
     }
 
     /**
@@ -168,6 +176,7 @@ public class FocusView extends View {
      */
     public void setFocusHeight(int height) {
         this.mFocusHeight = height;
+        invalidate();
     }
 
     /**
@@ -186,7 +195,7 @@ public class FocusView extends View {
      */
     public void setDarkColor(int color) {
         this.mDarkColor = color;
-        postInvalidate();
+        invalidate();
     }
 
     /**
@@ -205,7 +214,7 @@ public class FocusView extends View {
      */
     public void setFocusColor(int color) {
         this.mFocusColor = color;
-        postInvalidate();
+        invalidate();
     }
 
     /**
@@ -224,7 +233,7 @@ public class FocusView extends View {
      */
     public void setStrokWidth(float width) {
         this.mBorderWidth = width;
-        postInvalidate();
+        invalidate();
     }
 
     /**
@@ -236,7 +245,7 @@ public class FocusView extends View {
      */
     public void setFocusStyle(Style style) {
         this.mStyle = style;
-        postInvalidate();
+        invalidate();
     }
 
     /**
