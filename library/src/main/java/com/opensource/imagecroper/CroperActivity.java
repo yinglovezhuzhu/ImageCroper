@@ -161,6 +161,15 @@ public class CroperActivity extends MonitoredActivity {
         initCropView();
 	}
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(null != mBitmap && !mBitmap.isRecycled()) {
+            mBitmap.recycle();
+            mBitmap = null;
+        }
+    }
+
     /**
      * Calculate an inSampleSize for use in a {@link android.graphics.BitmapFactory.Options} object when decoding
      * bitmaps using the decode* methods from {@link android.graphics.BitmapFactory}. This implementation calculates
@@ -185,26 +194,9 @@ public class CroperActivity extends MonitoredActivity {
 
         if (height > reqHeight || width > reqWidth) {
             if (width > height) {
-                inSampleSize = Math.round((float) width / (float) reqWidth);
+                inSampleSize = width / reqWidth;
             } else {
-                inSampleSize = Math.round((float) height / (float) reqHeight);
-            }
-
-            // This offers some additional logic in case the image has a strange
-            // aspect ratio. For example, a panorama may have a much larger
-            // width than height. In these cases the total pixels might still
-            // end up being too large to fit comfortably in memory, so we should
-            // be more aggressive with sample down the image (=larger
-            // inSampleSize).
-
-            final float totalPixels = width * height;
-
-            // Anything more than 2x the requested pixels we'll sample down
-            // further.
-            final float totalReqPixelsCap = reqWidth * reqHeight;
-
-            while (totalPixels / (inSampleSize * inSampleSize) > totalReqPixelsCap) {
-                inSampleSize++;
+                inSampleSize = height / reqHeight;
             }
         }
         return inSampleSize;
