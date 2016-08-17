@@ -28,8 +28,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.opensource.imagecroper.CroperActivity;
-import com.opensource.imagecroper.CroperConfig;
+import com.opensource.imagecroper.CropActivity;
 import com.opensource.imagecroper.demo.util.Util;
 import com.opensource.imagecroper.util.LogUtil;
 
@@ -90,7 +89,7 @@ public class MainActivity extends Activity {
                 if(resultCode == RESULT_OK) {
                     Uri uri = data.getData();
                     if(uri != null) {
-                        cutPhoto(uri, 200);
+                        cutPhoto(uri, 400);
                     }
                 }
                 break;
@@ -103,10 +102,15 @@ public class MainActivity extends Activity {
                 break;
             case REQUEST_CUT_PHOTO: //剪切图片
                 if(resultCode == RESULT_OK) {
-                    Bitmap bm = data.getExtras().getParcelable("data");
+                    Bitmap bm = data.getExtras().getParcelable(CropActivity.EXTRA_DATA);
                     if(null != bm) {
 //                        mIvImage.setImageBitmap(BitmapUtils.toRoundCorner(bm, 2));
                         mIvImage.setImageBitmap(bm);
+                    }
+
+                    Uri uri = data.getData();
+                    if(null != uri) {
+                        mIvImage.setImageURI(uri);
                     }
                 }
                 break;
@@ -146,25 +150,26 @@ public class MainActivity extends Activity {
      */
     private void cutPhoto(Uri uri, int size) {
 //        Intent intent = new Intent("com.android.camera.action.CROP");
-        Intent intent = new Intent(this, CroperActivity.class);
+        Intent intent = new Intent(this, CropActivity.class);
         intent.setDataAndType(uri, "image/*");
-        intent.putExtra(CroperConfig.EXTRA_CIRCLE_CROP, true);
-        intent.putExtra(CroperConfig.EXTRA_SCALE_UP_IF_NEEDED, true);
+//        intent.putExtra(CropActivity.EXTRA_CIRCLE_CROP, true);
+        intent.putExtra(CropActivity.EXTRA_SCALE_UP_IF_NEEDED, true);
+        intent.putExtra(CropActivity.EXTRA_OUTPUT_FORMAT, Bitmap.CompressFormat.PNG);
 
         // aspectX aspectY 是宽高的比例
-        intent.putExtra("aspectX", 1);
-        intent.putExtra("aspectY", 1);
+        intent.putExtra(CropActivity.EXTRA_ASPECT_X, 1);
+        intent.putExtra(CropActivity.EXTRA_ASPECT_Y, 1);
 
         // outputX,outputY 是剪裁图片的宽高
-        intent.putExtra("outputX", size);
-        intent.putExtra("outputY", size);
+        intent.putExtra(CropActivity.EXTRA_OUTPUT_X, size);
+        intent.putExtra(CropActivity.EXTRA_OUTPUT_Y, size);
         //设置是否返回data数据
-        intent.putExtra("return-data", true);
+        intent.putExtra(CropActivity.EXTRA_RETURN_DATA, false);
         if(null == mAvatarFile) {
             mAvatarFile = new File(Util.createImageFilename(mPicFolder.getPath()));
         }
         //设置输出文件
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(mAvatarFile));
+//        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(mAvatarFile));
         startActivityForResult(intent, REQUEST_CUT_PHOTO);
     }
 

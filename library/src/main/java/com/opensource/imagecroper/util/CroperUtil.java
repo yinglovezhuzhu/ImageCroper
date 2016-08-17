@@ -211,14 +211,17 @@ public class CroperUtil {
 
     /**
      * Trans
-     * @param scaler
-     * @param source
-     * @param targetWidth
-     * @param targetHeight
-     * @param scaleUp
-     * @return
+     * @param matrix Matrix
+     * @param source source bitmap
+     * @param targetWidth target width of bitmap
+     * @param targetHeight target height of bitmap
+     * @param scaleUp cale up or not
+     * @return Bitmap
      */
-    public static Bitmap transform(Matrix scaler, Bitmap source, int targetWidth, int targetHeight, boolean scaleUp) {
+    public static Bitmap transform(Matrix matrix, Bitmap source, int targetWidth, int targetHeight, boolean scaleUp) {
+        if(null == source) {
+            return null;
+        }
         int deltaX = source.getWidth() - targetWidth;
         int deltaY = source.getHeight() - targetHeight;
         if (!scaleUp && (deltaX < 0 || deltaY < 0)) {
@@ -239,6 +242,7 @@ public class CroperUtil {
             int dstY = (targetHeight - src.height()) / 2;
             Rect dst = new Rect(dstX, dstY, targetWidth - dstX, targetHeight - dstY);
             c.drawBitmap(source, src, dst, null);
+            source.recycle();
             return b2;
         }
         float bitmapWidthF = source.getWidth();
@@ -250,23 +254,23 @@ public class CroperUtil {
         if (bitmapAspect > viewAspect) {
             float scale = targetHeight / bitmapHeightF;
             if (scale < .9F || scale > 1F) {
-                scaler.setScale(scale, scale);
+                matrix.setScale(scale, scale);
             } else {
-                scaler = null;
+                matrix = null;
             }
         } else {
             float scale = targetWidth / bitmapWidthF;
             if (scale < .9F || scale > 1F) {
-                scaler.setScale(scale, scale);
+                matrix.setScale(scale, scale);
             } else {
-                scaler = null;
+                matrix = null;
             }
         }
 
         Bitmap b1;
-        if (scaler != null) {
+        if (matrix != null) {
             // this is used for minithumb and crop, so we want to filter here.
-            b1 = Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), scaler, true);
+            b1 = Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
         } else {
             b1 = source;
         }
@@ -279,7 +283,7 @@ public class CroperUtil {
         if (b1 != source) {
             b1.recycle();
         }
-
+        source.recycle();
         return b2;
     }
 

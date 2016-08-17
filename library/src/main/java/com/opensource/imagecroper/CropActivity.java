@@ -44,9 +44,26 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class CroperActivity extends MonitoredActivity {
+public class CropActivity extends MonitoredActivity {
 
-	private static final String TAG = "CroperActivity";
+	private static final String TAG = "CropActivity";
+
+    public static final String EXTRA_CIRCLE_CROP = "circleCrop";
+    public static final String EXTRA_OUTPUT = "output";
+    public static final String EXTRA_OUTPUT_FORMAT = "outputFormat";
+    public static final String EXTRA_DATA = "data";
+    public static final String EXTRA_RETURN_DATA = "return-data";
+    public static final String EXTRA_ASPECT_X = "aspectX";
+    public static final String EXTRA_ASPECT_Y = "aspectY";
+    public static final String EXTRA_OUTPUT_X = "outputX";
+    public static final String EXTRA_OUTPUT_Y = "outputY";
+    public static final String EXTRA_SCALE = "scale";
+    public static final String EXTRA_SCALE_UP_IF_NEEDED = "scaleUpIfNeeded";
+    public static final String EXTRA_RECT = "rect";
+
+
+    public static final String ACTION_INLINE_DATA = "inline-data";
+
 
     public static final int CROP_MSG = 10;
     public static final int CROP_MSG_INTERNAL = 100;
@@ -65,10 +82,7 @@ public class CroperActivity extends MonitoredActivity {
     private boolean mScaleUp = true;
     private Uri mSaveUri = null;
     // These are various options can be specified in the intent.
-    private Bitmap.CompressFormat mOutputFormat = Bitmap.CompressFormat.JPEG; // only
-    // used
-    // with
-    // mSaveUri
+    private Bitmap.CompressFormat mOutputFormat = Bitmap.CompressFormat.JPEG; // only used with mSaveUri
 
     boolean mSaving; // Whether the "save" button is already clicked.
 
@@ -93,26 +107,26 @@ public class CroperActivity extends MonitoredActivity {
         Bundle extras = intent.getExtras();
 
         if (extras != null) {
-            mCircleCrop = extras.getBoolean(CroperConfig.EXTRA_CIRCLE_CROP, false);
+            mCircleCrop = extras.getBoolean(EXTRA_CIRCLE_CROP, false);
             if (mCircleCrop) {
                 mAspectX = 1;
                 mAspectY = 1;
-                //TODO Add some code to make fomat is png when crop a circle image.
+                //TODO Add some code to make format is png when crop a circle image.
             }
-            mSaveUri = extras.getParcelable(CroperConfig.EXTRA_OUTPUT);
+            mSaveUri = extras.getParcelable(EXTRA_OUTPUT);
             if (mSaveUri != null) {
-                String outputFormatString = extras.getString(CroperConfig.EXTRA_OUTPUT_FORMAT);
+                String outputFormatString = extras.getString(EXTRA_OUTPUT_FORMAT);
                 if (outputFormatString != null) {
                     mOutputFormat = Bitmap.CompressFormat.valueOf(outputFormatString);
                 }
             }
-            mBitmap = extras.getParcelable(CroperConfig.EXTRA_DATA);
-            mAspectX = extras.getInt(CroperConfig.EXTRA_ASPECT_X);
-            mAspectY = extras.getInt(CroperConfig.EXTRA_ASPECT_Y);
-            mOutputX = extras.getInt(CroperConfig.EXTRA_OUTPUT_X);
-            mOutputY = extras.getInt(CroperConfig.EXTRA_OUTPUT_Y);
-            mScale = extras.getBoolean(CroperConfig.EXTRA_SCALE, true);
-            mScaleUp = extras.getBoolean(CroperConfig.EXTRA_SCALE_UP_IF_NEEDED, true);
+            mBitmap = extras.getParcelable(EXTRA_DATA);
+            mAspectX = extras.getInt(EXTRA_ASPECT_X);
+            mAspectY = extras.getInt(EXTRA_ASPECT_Y);
+            mOutputX = extras.getInt(EXTRA_OUTPUT_X);
+            mOutputY = extras.getInt(EXTRA_OUTPUT_Y);
+            mScale = extras.getBoolean(EXTRA_SCALE, true);
+            mScaleUp = extras.getBoolean(EXTRA_SCALE_UP_IF_NEEDED, true);
         }
 
         if (mBitmap == null) {
@@ -159,6 +173,8 @@ public class CroperActivity extends MonitoredActivity {
         });
 
         initCropView();
+
+        mContentResolver = getContentResolver();
 	}
 
     @Override
@@ -248,11 +264,7 @@ public class CroperActivity extends MonitoredActivity {
         if (mOutputX != 0 && mOutputY != 0) {
             if (mScale) {
                 // Scale the image to the required dimensions.
-                Bitmap old = croppedImage;
                 croppedImage = CroperUtil.transform(new Matrix(), croppedImage, mOutputX, mOutputY, mScaleUp);
-                if (old != croppedImage) {
-                    old.recycle();
-                }
             } else {
 
                 /*
@@ -282,17 +294,16 @@ public class CroperActivity extends MonitoredActivity {
                 canvas.drawBitmap(mBitmap, srcRect, dstRect, null);
 
                 // Set the cropped bitmap as the new bitmap.
-                croppedImage.recycle();
                 croppedImage = b;
             }
         }
 
         // Return the cropped image directly or save it to the specified URI.
         Bundle myExtras = getIntent().getExtras();
-        if (myExtras != null && (myExtras.getParcelable(CroperConfig.EXTRA_DATA) != null || myExtras.getBoolean(CroperConfig.EXTRA_RETURN_DATA))) {
+        if (myExtras != null && (myExtras.getParcelable(EXTRA_DATA) != null || myExtras.getBoolean(EXTRA_RETURN_DATA))) {
             Bundle extras = new Bundle();
-            extras.putParcelable(CroperConfig.EXTRA_DATA, croppedImage);
-            setResult(RESULT_OK, (new Intent()).setAction(CroperConfig.ACTION_INLINE_DATA).putExtras(extras));
+            extras.putParcelable(EXTRA_DATA, croppedImage);
+            setResult(RESULT_OK, (new Intent()).setAction(ACTION_INLINE_DATA).putExtras(extras));
             finish();
         } else {
             final Bitmap b = croppedImage;
@@ -301,35 +312,21 @@ public class CroperActivity extends MonitoredActivity {
                     saveOutput(b);
                 }
             };
-//            CroperUtil.startBackgroundJob(this, null, getResources().getString(R.string.saving_image), save, mHandler);
-            CroperUtil.startBackgroundJob(this, null, "正在保存图片", save, mHandler);
+            CroperUtil.startBackgroundJob(this, null, getString(R.string.str_saving_image), save, mHandler);
         }
     }
 
     /**
      * Save the cropped image to file<br/>
      * <br/><p/>If the output file has been set, it won't insert the image message inout ContentProvider<br/>
-     * @param croppedImage
+     * @param croppedImage The bitmap to save to file
      */
     private void saveOutput(Bitmap croppedImage) {
-        if (mSaveUri != null) {
-            OutputStream outputStream = null;
-            try {
-                outputStream = mContentResolver.openOutputStream(mSaveUri);
-                if (outputStream != null) {
-                    croppedImage.compress(mOutputFormat, 80, outputStream);
-                }
-                // TODO ExifInterface write
-            } catch (IOException ex) {
-                Log.e(TAG, "Cannot open file: " + mSaveUri, ex);
-            } finally {
-                CroperUtil.closeSilently(outputStream);
-            }
-            Bundle extras = new Bundle();
-            setResult(RESULT_OK, new Intent(mSaveUri.toString()).putExtras(extras));
-        } else {
-            Bundle extras = new Bundle();
-            extras.putString(CroperConfig.EXTRA_RECT, mCropView.getCropRect().toString());
+        Bundle extras = new Bundle();
+        extras.putString(EXTRA_RECT, mCropView.getCropRect().toString());
+        Intent intent = new Intent();
+        intent.putExtras(extras);
+        if (mSaveUri == null) {
             File oldFile = CroperUtil.parseUriToFile(this, mInputUri);
             File directory = new File(oldFile.getParent());
             int x = 0;
@@ -354,17 +351,30 @@ public class CroperActivity extends MonitoredActivity {
             int[] degree = new int[1];
             Double latitude = null;
             Double longitude = null;
-            Uri newUri = CroperUtil.addImage(mContentResolver, title,
+            mSaveUri = CroperUtil.addImage(mContentResolver, title,
                     System.currentTimeMillis() / 1000, System.currentTimeMillis(), latitude,
                     longitude, directory.toString(), finalFileName,
                     croppedImage, null, degree);
-            if (newUri != null) {
-                setResult(RESULT_OK, new Intent().setAction(newUri.toString()).putExtras(extras));
-            } else {
-                setResult(RESULT_OK, new Intent().setAction(null));
+        }
+        if(null != mSaveUri) {
+            OutputStream outputStream = null;
+            try {
+                outputStream = mContentResolver.openOutputStream(mSaveUri);
+                if (outputStream != null) {
+                    croppedImage.compress(mOutputFormat, 100, outputStream);
+                }
+                // TODO ExifInterface write
+            } catch (IOException ex) {
+                Log.e(TAG, "Cannot open file: " + mSaveUri, ex);
+            } finally {
+                CroperUtil.closeSilently(outputStream);
             }
         }
-        croppedImage.recycle();
+        if(null != croppedImage) {
+            croppedImage.recycle();
+        }
+        intent.setData(mSaveUri);
+        setResult(RESULT_OK, intent);
         finish();
     }
 

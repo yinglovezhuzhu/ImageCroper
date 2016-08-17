@@ -1,5 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
-  ~ Copyright (C) 2014. The Android Open Source Project.
+  ~ Copyright (C) 2016. The Android Open Source Project.
   ~
   ~         yinglovezhuzhu@gmail.com
   ~
@@ -16,17 +17,6 @@
   ~  limitations under the License.
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.opensource.imagecroper">
-
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
-    <application android:allowBackup="true"
-        android:label="@string/app_name"
-        android:icon="@drawable/ic_launcher">
-
-        <activity android:name=".CropActivity" />
-    </application>
-
-</manifest>
+<resources>
+    <string name="str_saving_image">正在保存图片</string>
+</resources>
