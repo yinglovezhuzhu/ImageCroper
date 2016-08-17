@@ -24,9 +24,7 @@ import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.os.Build;
 import android.util.AttributeSet;
-import android.util.FloatMath;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
@@ -402,11 +400,6 @@ public class CropView extends FrameLayout {
         }
 		float x = event.getX(0) - event.getX(1);
 		float y = event.getY(0) - event.getY(1);
-        //如果在API8以下的版本使用，采用FloatMath.sqrt()会更快，但是在API8和以上版本，Math.sqrt()更快
-        //原文：Use java.lang.Math#sqrt instead of android.util.FloatMath#sqrt() since it is faster as of API 8
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
-            return FloatMath.sqrt(x * x + y * y);
-        }
         return (float) Math.sqrt(x * x + y * y);
 	}
 

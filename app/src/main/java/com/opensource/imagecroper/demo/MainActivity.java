@@ -18,12 +18,12 @@
 
 package com.opensource.imagecroper.demo;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -35,7 +35,7 @@ import com.opensource.imagecroper.util.LogUtil;
 
 import java.io.File;
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
 
