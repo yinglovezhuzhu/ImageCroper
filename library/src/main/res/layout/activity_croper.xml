@@ -58,9 +58,19 @@
             android:textColor="@color/croper_title_text_color"
             android:text="@string/save"/>
     </LinearLayout>
-    <com.opensource.imagecroper.widget.CropView
-        android:id="@+id/cv_croper_image"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-    
+        android:layout_height="match_parent">
+        <com.opensource.imagecroper.widget.CropView
+            android:id="@+id/cv_croper_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <ImageButton
+            android:id="@+id/ibtn_rotate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:src="@android:drawable/ic_menu_rotate"/>
+    </FrameLayout>
+
 </LinearLayout>

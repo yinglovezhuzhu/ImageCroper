@@ -37,7 +37,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.opensource.imagecroper.util.CroperUtil;
+import com.opensource.imagecroper.util.CropUtil;
 import com.opensource.imagecroper.widget.CropView;
 
 import java.io.File;
@@ -133,7 +133,7 @@ public class CropActivity extends MonitoredActivity {
             // Create a MediaItem representing the URI.
             mInputUri = intent.getData();
 
-            File imageFile = CroperUtil.parseUriToFile(this, mInputUri);
+            File imageFile = CropUtil.parseUriToFile(this, mInputUri);
 
 
             if(null != imageFile) {
@@ -169,6 +169,14 @@ public class CropActivity extends MonitoredActivity {
         findViewById(R.id.btn_croper_save).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 onSaveClicked();
+            }
+        });
+
+        findViewById(R.id.ibtn_rotate).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBitmap = CropUtil.rotate(mBitmap, 90);
+                mCropView.setImageBitmap(mBitmap);
             }
         });
 
@@ -264,7 +272,7 @@ public class CropActivity extends MonitoredActivity {
         if (mOutputX != 0 && mOutputY != 0) {
             if (mScale) {
                 // Scale the image to the required dimensions.
-                croppedImage = CroperUtil.transform(new Matrix(), croppedImage, mOutputX, mOutputY, mScaleUp);
+                croppedImage = CropUtil.transform(new Matrix(), croppedImage, mOutputX, mOutputY, mScaleUp);
             } else {
 
                 /*
@@ -312,7 +320,7 @@ public class CropActivity extends MonitoredActivity {
                     saveOutput(b);
                 }
             };
-            CroperUtil.startBackgroundJob(this, null, getString(R.string.str_saving_image), save, mHandler);
+            CropUtil.startBackgroundJob(this, null, getString(R.string.str_saving_image), save, mHandler);
         }
     }
 
@@ -327,7 +335,7 @@ public class CropActivity extends MonitoredActivity {
         Intent intent = new Intent();
         intent.putExtras(extras);
         if (mSaveUri == null) {
-            File oldFile = CroperUtil.parseUriToFile(this, mInputUri);
+            File oldFile = CropUtil.parseUriToFile(this, mInputUri);
             File directory = new File(oldFile.getParent());
             int x = 0;
             String fileName = oldFile.getName();
@@ -351,7 +359,7 @@ public class CropActivity extends MonitoredActivity {
             int[] degree = new int[1];
             Double latitude = null;
             Double longitude = null;
-            mSaveUri = CroperUtil.addImage(mContentResolver, title,
+            mSaveUri = CropUtil.addImage(mContentResolver, title,
                     System.currentTimeMillis() / 1000, System.currentTimeMillis(), latitude,
                     longitude, directory.toString(), finalFileName,
                     croppedImage, null, degree);
@@ -367,7 +375,7 @@ public class CropActivity extends MonitoredActivity {
             } catch (IOException ex) {
                 Log.e(TAG, "Cannot open file: " + mSaveUri, ex);
             } finally {
-                CroperUtil.closeSilently(outputStream);
+                CropUtil.closeSilently(outputStream);
             }
         }
         if(null != croppedImage) {
