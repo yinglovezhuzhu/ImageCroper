@@ -88,7 +88,6 @@ public class CropActivity extends MonitoredActivity {
 
     private ContentResolver mContentResolver;
 
-    private Bitmap mBitmap;
     private Uri mInputUri;
 
 
@@ -103,9 +102,12 @@ public class CropActivity extends MonitoredActivity {
 
 		setContentView(R.layout.activity_croper);
 
+        mContentResolver = getContentResolver();
+
         Intent intent = getIntent();
         Bundle extras = intent.getExtras();
 
+        Bitmap bitmap = null;
         if (extras != null) {
             mCircleCrop = extras.getBoolean(EXTRA_CIRCLE_CROP, false);
             if (mCircleCrop) {
@@ -120,7 +122,7 @@ public class CropActivity extends MonitoredActivity {
                     mOutputFormat = Bitmap.CompressFormat.valueOf(outputFormatString);
                 }
             }
-            mBitmap = extras.getParcelable(EXTRA_DATA);
+            bitmap = extras.getParcelable(EXTRA_DATA);
             mAspectX = extras.getInt(EXTRA_ASPECT_X);
             mAspectY = extras.getInt(EXTRA_ASPECT_Y);
             mOutputX = extras.getInt(EXTRA_OUTPUT_X);
@@ -129,7 +131,7 @@ public class CropActivity extends MonitoredActivity {
             mScaleUp = extras.getBoolean(EXTRA_SCALE_UP_IF_NEEDED, true);
         }
 
-        if (mBitmap == null) {
+        if (bitmap == null) {
             // Create a MediaItem representing the URI.
             mInputUri = intent.getData();
 
@@ -146,11 +148,11 @@ public class CropActivity extends MonitoredActivity {
                 options.inSampleSize = calculateInSampleSize(options,
                         displayMetrics.widthPixels, displayMetrics.heightPixels);
                 options.inJustDecodeBounds = false;
-                mBitmap = BitmapFactory.decodeFile(imagePath, options);
+                bitmap = BitmapFactory.decodeFile(imagePath, options);
             }
         }
 
-        if (mBitmap == null) {
+        if (bitmap == null) {
             Log.e(TAG, "Cannot load bitmap, exiting.");
             finish();
             return;
@@ -175,22 +177,20 @@ public class CropActivity extends MonitoredActivity {
         findViewById(R.id.ibtn_rotate).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mBitmap = CropUtil.rotate(mBitmap, 90);
-                mCropView.setImageBitmap(mBitmap);
+                mCropView.rotate(90);
             }
         });
 
         initCropView();
 
-        mContentResolver = getContentResolver();
+        mCropView.setImageBitmap(bitmap);
 	}
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(null != mBitmap && !mBitmap.isRecycled()) {
-            mBitmap.recycle();
-            mBitmap = null;
+        if(null != mCropView) {
+            mCropView.onDestroy();
         }
     }
 
@@ -252,7 +252,7 @@ public class CropActivity extends MonitoredActivity {
         {
             Canvas canvas = new Canvas(croppedImage);
             Rect dstRect = new Rect(0, 0, width, height);
-            canvas.drawBitmap(mBitmap, rect, dstRect, null);
+            canvas.drawBitmap(mCropView.getBitmap(), rect, dstRect, null);
         }
 
         if (mCircleCrop) {
@@ -283,7 +283,7 @@ public class CropActivity extends MonitoredActivity {
 
                 // Don't scale the image but instead fill it so it's the
                 // required dimension
-                Bitmap b = Bitmap.createBitmap(mOutputX, mOutputY, Bitmap.Config.RGB_565);
+                Bitmap b = Bitmap.createBitmap(mOutputX, mOutputY, mCircleCrop ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
                 Canvas canvas = new Canvas(b);
 
                 Rect srcRect = mCropView.getCropRect();
@@ -299,7 +299,7 @@ public class CropActivity extends MonitoredActivity {
                 dstRect.inset(Math.max(0, -dx), Math.max(0, -dy));
 
                 // Draw the cropped bitmap in the center.
-                canvas.drawBitmap(mBitmap, srcRect, dstRect, null);
+                canvas.drawBitmap(mCropView.getBitmap(), srcRect, dstRect, null);
 
                 // Set the cropped bitmap as the new bitmap.
                 croppedImage = b;
@@ -392,8 +392,6 @@ public class CropActivity extends MonitoredActivity {
     private void initCropView() {
         mCropView = (CropView) findViewById(R.id.cv_croper_image);
         mCropView.setCircleCrop(mCircleCrop);
-//        mCropView.setCircleCrop(true);
-        mCropView.setImageBitmap(mBitmap);
     }
 
 }

@@ -20,10 +20,13 @@ package com.opensource.imagecroper.widget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -31,6 +34,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 
+import com.opensource.imagecroper.util.CropUtil;
 import com.opensource.imagecroper.util.LogUtil;
 
 /**
@@ -250,6 +254,35 @@ public class CropView extends FrameLayout {
      */
     public void setCircleCrop(boolean circleCrop) {
         mFocusView.setFocusStyle(circleCrop ? FocusView.Style.CIRCLE : FocusView.Style.RECTANGLE);
+    }
+
+    /**
+     * Rotate bitmap
+     * @param degree The degree to rotate
+     */
+    public void rotate(int degree) {
+        mBitmap = CropUtil.rotate(mBitmap, degree);
+        mImageView.setImageBitmap(mBitmap);
+        mImageView.setScaleType(ScaleType.FIT_CENTER);
+        mBitmapWidth = mBitmap.getWidth();
+        mBitmapHeight = mBitmap.getHeight();
+    }
+
+    /**
+     * Get bitmap
+     * @return bitmap
+     */
+    public Bitmap getBitmap() {
+        return mBitmap;
+    }
+
+    /**
+     * onDestroy
+     */
+    public void onDestroy() {
+        if(null != mBitmap && !mBitmap.isRecycled()) {
+            mBitmap.recycle();
+        }
     }
 
     /**
