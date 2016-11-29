@@ -48,17 +48,29 @@ public class CropActivity extends MonitoredActivity {
 
 	private static final String TAG = "CropActivity";
 
+    /** 参数：是否裁剪圆形图片（boolean，默认false） **/
     public static final String EXTRA_CIRCLE_CROP = "circleCrop";
+    /** 参数：输出图片Uri（Uri） **/
     public static final String EXTRA_OUTPUT = "output";
+    /** 参数：输出图片格式（String） **/
     public static final String EXTRA_OUTPUT_FORMAT = "outputFormat";
+    /** 参数：输入图片Uri（Uri） **/
     public static final String EXTRA_DATA = "data";
+    /** 参数：是否返回数据（boolean，默认false， 返回bitmap） **/
     public static final String EXTRA_RETURN_DATA = "return-data";
+    /** 参数：裁剪X形状比例（int, 跟EXTRA_ASPECT_Y同用，两个相等表示正方形） **/
     public static final String EXTRA_ASPECT_X = "aspectX";
+    /** 参数：裁剪Y形状比例（int, 跟EXTRA_ASPECT_Y同用，两个相等表示正方形） **/
     public static final String EXTRA_ASPECT_Y = "aspectY";
+    /** 参数：输入图片宽度（int） **/
     public static final String EXTRA_OUTPUT_X = "outputX";
+    /** 参数：输出图片高度（int） **/
     public static final String EXTRA_OUTPUT_Y = "outputY";
+    /** 参数：缩放（float） **/
     public static final String EXTRA_SCALE = "scale";
+    /** 参数：是否在必要时放大处理（boolean， 默认false） **/
     public static final String EXTRA_SCALE_UP_IF_NEEDED = "scaleUpIfNeeded";
+    /** 参数： **/
     public static final String EXTRA_RECT = "rect";
 
 
