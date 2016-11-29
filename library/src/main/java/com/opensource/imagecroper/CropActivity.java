@@ -146,7 +146,7 @@ public class CropActivity extends MonitoredActivity {
                 BitmapFactory.decodeFile(imagePath, options);
                 DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
                 options.inSampleSize = calculateInSampleSize(options,
-                        displayMetrics.widthPixels, displayMetrics.heightPixels);
+                        displayMetrics.widthPixels * 2, displayMetrics.heightPixels * 2);
                 options.inJustDecodeBounds = false;
                 bitmap = BitmapFactory.decodeFile(imagePath, options);
             }

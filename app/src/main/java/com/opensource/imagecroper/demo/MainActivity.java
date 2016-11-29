@@ -89,7 +89,7 @@ public class MainActivity extends Activity {
                 if(resultCode == RESULT_OK) {
                     Uri uri = data.getData();
                     if(uri != null) {
-                        cutPhoto(uri, 400);
+                        cutPhoto(uri, 1000);
                     }
                 }
                 break;
