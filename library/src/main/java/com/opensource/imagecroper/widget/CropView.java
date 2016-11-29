@@ -286,6 +286,28 @@ public class CropView extends FrameLayout {
     }
 
     /**
+     * 设置聚焦框的宽度
+     * @param width 宽度
+     */
+    public void setFocusViewWidth(int width) {
+        if(null == mFocusView) {
+            return;
+        }
+        mFocusView.setFocusWidth(width);
+    }
+
+    /**
+     * 设置聚焦框的高度
+     * @param height 高度
+     */
+    public void setFocusViewHeight(int height) {
+        if(null == mFocusView) {
+            return;
+        }
+        mFocusView.setFocusHeight(height);
+    }
+
+    /**
      * onTouch中的MotionEvent.ACTION_DOWN执行的操作
      * @param event
      */

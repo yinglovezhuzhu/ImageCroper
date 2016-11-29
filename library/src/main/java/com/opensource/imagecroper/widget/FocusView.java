@@ -27,6 +27,7 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.view.View;
 
 public class FocusView extends View {
@@ -64,15 +65,17 @@ public class FocusView extends View {
 
     public FocusView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init(context);
     }
 
     public FocusView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init(context);
     }
 
     public FocusView(Context context) {
         super(context);
-
+        init(context);
     }
 
     @Override
@@ -150,12 +153,14 @@ public class FocusView extends View {
     }
 
     /**
-     * 设置焦点框的宽度
+     * 设置焦点框的宽度（最大不能超过屏幕的宽度）
      *
      * @param width
      */
     public void setFocusWidth(int width) {
-        this.mFocusWidth = width;
+        final int focusWidth = width > getResources().getDisplayMetrics().widthPixels
+                ? getResources().getDisplayMetrics().widthPixels : width;
+        this.mFocusWidth = focusWidth;
         invalidate();
     }
 
@@ -168,11 +173,13 @@ public class FocusView extends View {
     }
 
     /**
-     * 获取焦点框的高度
-     * @param height
+     * 获取焦点框的高度（最大不能超过屏幕的高度）
+     * @param height 高度
      */
     public void setFocusHeight(int height) {
-        this.mFocusHeight = height;
+        final int focusHeight = height > getResources().getDisplayMetrics().heightPixels
+                ? getResources().getDisplayMetrics().heightPixels : height;
+        this.mFocusHeight = focusHeight;
         invalidate();
     }
 
@@ -281,5 +288,16 @@ public class FocusView extends View {
             }
         }
 
+    }
+
+    /**
+     * 初始化
+     * @param context Context对象
+     */
+    private void init(Context context) {
+        final DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        final int screenMinSize = dm.widthPixels > dm.heightPixels ? dm.heightPixels : dm.widthPixels;
+        mFocusWidth = screenMinSize / 3 * 2;
+        mFocusHeight = screenMinSize / 3 * 2;
     }
 }
