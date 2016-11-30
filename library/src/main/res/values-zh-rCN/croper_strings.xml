@@ -18,6 +18,7 @@
   -->
 
 <resources>
+    <string name="str_saving_image">正在保存图片</string>
 
     <string name="app_name">图片裁剪</string>
     <string name="action_settings">设置</string>

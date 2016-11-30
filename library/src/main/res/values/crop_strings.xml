@@ -19,4 +19,13 @@
 
 <resources>
     <string name="str_saving_image">正在保存图片</string>
+
+    <string name="app_name">图片裁剪</string>
+    <string name="action_settings">设置</string>
+
+    <string name="cut">剪切</string>
+
+    <string name="title">图片裁剪器</string>
+    <string name="cancel">取消</string>
+    <string name="save">保存</string>
 </resources>
